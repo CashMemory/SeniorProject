@@ -238,6 +238,8 @@ def preprocess(image):
 
     NOTE: mean, std, and device are pulled from global scope
     """
+    global device
+    device = torch.device("cuda")
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = PIL.Image.fromarray(image)
     image = transforms.functional.to_tensor(image).to(device)  # move to cuda
