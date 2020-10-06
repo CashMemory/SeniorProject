@@ -16,11 +16,11 @@ import os.path
 import numpy as np
 import copy
 
+rep_stack = []
 def angle_between_points(p0, p1, p2):
     a = (p1[0] - p0[0])**2 + (p1[1]-p0[1])**2
     b = (p1[0] - p2[0])**2 + (p1[1]-p2[1])**2
     c = (p2[0] - p0[0])**2 + (p2[1]-p0[1])**2
-    print("a: ", a, "b: ", b, "c: ", c)
     if a * b == 0:
         return -1.0
 
@@ -114,6 +114,8 @@ def preprocess(image):
     return image[None, ...]
 
 def execute(img, src, t):
+    global rep
+    global rep_stack
     color = (0, 255, 0)
     data = preprocess(img)
     cmap, paf = model_trt(data)
@@ -134,24 +136,49 @@ def execute(img, src, t):
                 cv2.putText(src , "%d" % int(keypoints[j][0]), (x + 5, y),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1)
                 cv2.circle(src, (x, y), 3, color, 2)
         for point in xy_dat:
-            if point is None:
+           if point is None:
                 print("xy_dat is incomplete!")
                 has_data = False
         if has_data and len(xy_dat) == 3:
             print(xy_dat)
             angle = angle_between_points(xy_dat[0], xy_dat[1], xy_dat[2])
+            #for data_point in xy_dat:
+                #cv2.circle(img=src, 
+                           #center=data_point, 
+                           #radius=1//angle * 5, 
+                           #color=(255, 0, 0), 
+                           #thickness=2)
+            
+            # Red
             if angle < 60:
+                if rep_stack[-1] == "blue": 
+                    rep_stack.append("red")
                 for data_point in xy_dat:
-                    cv2.circle(src, data_point, 3, (255, 0, 0), 2)
+                    cv2.circle(img=src, 
+                               center=data_point, 
+                               radius=3, 
+                               color=(255, 0, 0), 
+                               thickness=2)
+            # Blue
             elif angle > 100:
+                if len(rep_stack) == 0:
+                    rep_stack.append("blue")
+                elif rep_stack[-1] == "red":
+                    rep += 1
+                    rep_stack = []
                 for data_point in xy_dat:
-                    cv2.circle(src, data_point, 3, (0, 0, 255), 2)
-            print(f"Angle: {angle}")
+                    cv2.circle(img=src, 
+                               center=data_point, 
+                               radius=3, 
+                               color=(0, 0, 255), 
+                               thickness=2)
     print("FPS:%f "%(fps))
     
     #draw_objects(img, counts, objects, peaks)
 
     cv2.putText(src , "FPS: %f" % (fps), (20, 20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
+
+    cv2.putText(src , "Rep: %d" % (rep), (40, 40),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
     #resized = cv2.resize(src, (640, 480))
     #cv2.imshow('Pose Estimation', resized)
     out_video.write(src)
@@ -165,7 +192,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 ret_val, img = cap.read()
 fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-out_video = cv2.VideoWriter('/tmp/output.mp4', fourcc, cap.get(cv2.CAP_PROP_FPS), (640, 480))
+out_video = cv2.VideoWriter('livewithrep.mp4', fourcc, cap.get(cv2.CAP_PROP_FPS), (640, 480))
 count = 0
 
 X_compress = 640.0 / WIDTH * 1.0
@@ -178,6 +205,7 @@ if cap is None:
 parse_objects = ParseObjects(topology)
 #draw_objects = DrawObjects(topology)
 
+rep = 0
 while cap.isOpened() and count < 200:
     t = time.time()
     ret_val, dst = cap.read()
@@ -185,17 +213,16 @@ while cap.isOpened() and count < 200:
         print("Camera read Error")
         break
 
-    # im2 = np.copy(dst)
-    # im3 = copy.deepcopy(dst)
     img = cv2.resize(dst, dsize=(WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
 
+    
     cv2.imshow('test', execute(img, dst, t))
     cv2.waitKey(1)
     count += 1
 
 
 cv2.destroyAllWindows()
-#out_video.release()
+out_video.release()
 cap.release()
 
 
