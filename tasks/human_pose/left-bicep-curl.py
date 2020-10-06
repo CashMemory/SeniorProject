@@ -13,7 +13,8 @@ from trt_pose.draw_objects import DrawObjects
 from trt_pose.parse_objects import ParseObjects
 import argparse
 import os.path
-
+import numpy as np
+import copy
 
 def angle_between_points(p0, p1, p2):
     a = (p1[0] - p0[0])**2 + (p1[1]-p0[1])**2
@@ -120,6 +121,7 @@ def execute(img, src, t):
     counts, objects, peaks = parse_objects(cmap, paf)#, cmap_threshold=0.15, link_threshold=0.15)
     fps = 1.0 / (time.time() - t)
     xy_dat = []
+    has_data = True
     for i in range(counts[0]):
         keypoints = get_keypoint(objects, i, peaks)
         left_bicep_curl = [5, 7, 9]
@@ -134,20 +136,26 @@ def execute(img, src, t):
         for point in xy_dat:
             if point is None:
                 print("xy_dat is incomplete!")
-        angle = angle_between_points(xy_dat[0], xy_dat[1], xy_dat[2])
-        if angle < 60:
-            for data_point in xy_dat:
-                cv2.circle(src, data_point, 3, (255, 0, 0), 2)
-        elif angle > 100:
-            for data_point in xy_dat:
-                cv2.circle(src, data_point, 3, (0, 0, 255), 2)
-        print(f"Angle: {angle}")
+                has_data = False
+        if has_data and len(xy_dat) == 3:
+            print(xy_dat)
+            angle = angle_between_points(xy_dat[0], xy_dat[1], xy_dat[2])
+            if angle < 60:
+                for data_point in xy_dat:
+                    cv2.circle(src, data_point, 3, (255, 0, 0), 2)
+            elif angle > 100:
+                for data_point in xy_dat:
+                    cv2.circle(src, data_point, 3, (0, 0, 255), 2)
+            print(f"Angle: {angle}")
     print("FPS:%f "%(fps))
     
-    draw_objects(img, counts, objects, peaks)
+    #draw_objects(img, counts, objects, peaks)
 
     cv2.putText(src , "FPS: %f" % (fps), (20, 20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
+    #resized = cv2.resize(src, (640, 480))
+    #cv2.imshow('Pose Estimation', resized)
     out_video.write(src)
+    return src
 
 
 
@@ -168,7 +176,7 @@ if cap is None:
     sys.exit(0)
 
 parse_objects = ParseObjects(topology)
-draw_objects = DrawObjects(topology)
+#draw_objects = DrawObjects(topology)
 
 while cap.isOpened() and count < 200:
     t = time.time()
@@ -177,13 +185,17 @@ while cap.isOpened() and count < 200:
         print("Camera read Error")
         break
 
+    # im2 = np.copy(dst)
+    # im3 = copy.deepcopy(dst)
     img = cv2.resize(dst, dsize=(WIDTH, HEIGHT), interpolation=cv2.INTER_AREA)
-    execute(img, dst, t)
+
+    cv2.imshow('test', execute(img, dst, t))
+    cv2.waitKey(1)
     count += 1
 
 
 cv2.destroyAllWindows()
-out_video.release()
+#out_video.release()
 cap.release()
 
 
