@@ -1,0 +1,6 @@
+
+*.pth
+models/densenet121_baseline_att_256x256_B_epoch_160.pth
+*.pth
+*.pth
+models/resnet18_baseline_att_224x224_A_epoch_249_trt.pth
