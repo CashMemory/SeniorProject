@@ -13,7 +13,6 @@ from torch2trt import TRTModule
 import trt_pose.coco
 import trt_pose.models
 from trt_pose.parse_objects import ParseObjects
-from trt_pose.draw_objects import DrawObjects 
 
 
 class Model:
@@ -23,7 +22,7 @@ class Model:
         self.the_model = None
         self.model_trt = None
         self.height = None
-        self.width = None 
+        self.width = None
         self.model_weights = None
         self.optimized_model = None
         self.num_parts = len(pose_annotations["keypoints"])
@@ -61,7 +60,7 @@ class Model:
             .cuda()
             .eval()
         )
-        
+
 
     def load_weights(self):
         """Load the model weights.
@@ -78,10 +77,7 @@ class Model:
 
     def get_optimized(self):
         """Optimize this model by converting Pytorch to TensorRT."""
-        # Create sample data used to optimize with TensorRT
         self.data = torch.zeros((1, 3, self.height, self.width)).cuda()
-        # Optimize and save results if it's not already optimized
-
         self.model_trt = TRTModule()
         self.model_trt.load_state_dict(torch.load(self.optimized_model))
 
@@ -145,11 +141,8 @@ device = torch.device("cuda")
 
 def main():
 
-    print("Beginning script")
     parser = argparse.ArgumentParser(description="TensorRT pose estimation")
     parser.add_argument("--model", type=str, default="resnet")
-    parser.add_argument("--output", type=str, default="/tmp/output.mp4")
-    parser.add_argument("--limit", type=int, default=500)
     args = parser.parse_args()
 
     # Load the annotation file and create a topology tensor
@@ -158,29 +151,24 @@ def main():
 
     # Create a topology tensor (intermediate DS that describes part linkages)
     topology = trt_pose.coco.coco_category_to_topology(human_pose)
-    
+
     # Construct and load the model
     model = Model(pose_annotations=human_pose)
     model.load_model(args.model)
-    #model.load_weights()
     model.get_optimized()
     model.log_fps()
-    print("Set up model")
 
     # Set up the camera
     camera = Camera(width=WIDTH, height=HEIGHT)
-    camera.capture_video("mp4v", args.output)
+    camera.capture_video("MP4V", "/tmp/output.mp4")  # OPTIONAL
     assert camera.cap is not None, "Camera Open Error"
-    print("Set up camera")
 
     # Set up callable class used to parse the objects from the neural network
     parse_objects = ParseObjects(topology)  # from trt_pose.parse_objects
-    draw_objects = DrawObjects(topology)  # from trt_pose.draw_objects
 
-    print("Executing...")
     # Execute while the camera is open and we haven't reached the time limit
     count = 0
-    time_limit = args.limit
+    time_limit = 500
     while camera.cap.isOpened() and count < time_limit:
         t = time.time()
         succeeded, image = camera.cap.read()
@@ -195,15 +183,12 @@ def main():
         counts, objects, peaks = model.execute_neural_net(
             data=preprocessed, parser=parse_objects
         )
-        drawn = draw(resized_img, counts, objects, peaks, t, draw_objects)
+        drawn = draw(resized_img, counts, objects, peaks, t)
         if camera.out:
-            camera.out.write(drawn)
-        cv2.imshow('flab2ab',drawn)
-        cv2.waitkey(1)
+            camera.out(drawn)
         count += 1
 
     # Clean up resources
-    print("Cleaning up")
     cv2.destroyAllWindows()
     camera.out.release()
     camera.cap.release()
@@ -214,8 +199,6 @@ def preprocess(image):
 
     NOTE: mean, std, and device are pulled from global scope
     """
-    global device
-    device = torch.device("cuda")
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = PIL.Image.fromarray(image)
     image = transforms.functional.to_tensor(image).to(device)  # move to cuda
@@ -229,7 +212,9 @@ def get_keypoint(humans, hnum, peaks):
     If a particular keypoint is found, it returns a coordinate value between
     0.0 and 1.0. Multiply this coordinate by the image size to calculate the
     exact location on the input image
-    :param humans: :param hnum: A 0 based human index
+
+    :param humans:
+    :param hnum: A 0 based human index
     :param peaks:
     :return:
     """
@@ -249,30 +234,34 @@ def get_keypoint(humans, hnum, peaks):
     return kpoint
 
 
-def draw(src, counts, objects, peaks, t, drawer):
+def draw(src, counts, objects, peaks, time):
     color = (0, 255, 0)  # green
-    fps = 1.0 / (time.time() - t)
-    for i in range(counts[0]):
+    fps = 1.0 / (time.time() - time)
+    count = int(counts[0])
+    for i in range(count):
         keypoints = get_keypoint(humans=objects, hnum=i, peaks=peaks)
         for j in range(len(keypoints)):
             if keypoints[j][1]:
                 x = round(keypoints[j][2] * WIDTH * X_compress)
                 y = round(keypoints[j][1] * HEIGHT * Y_compress)
                 cv2.circle(src, (x, y), 3, color, 2)
-                cv2.putText(src, "%d" % int(keypoints[j][0]), (x + 5, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+                cv2.putText(
+                    src,
+                    str(int(keypoints[j][0])),
+                    (x + 5, y),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 255),
+                    1,
+                )
                 cv2.circle(src, (x, y), 3, color, 2)
-        drawer(img, counts, objects, peaks)
     cv2.putText(
         src,
-        "FPS: %d" % fps,
+        f"FPS: {fps}",
         (20, 20),
         cv2.FONT_HERSHEY_SIMPLEX,
         1,
         (0, 255, 0),
-        1
+        1,
     )
     return src
-
-
-if __name__ == "__main__":
-    main()
