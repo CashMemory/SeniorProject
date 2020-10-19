@@ -43,42 +43,25 @@ class Model:
         # The number of part affinity field channels is 2x the number of links,
         # because each link has a channel corresponding to the x and y
         # direction of the vector field for each link.
-        if name == "resnet":
-            print("------ model = resnet--------")
-            # resnet18 was trained on an input resolution of 224x224
-            self.width = 224
-            self.height = 224
-            self.model_weights = (
-                "resnet18_baseline_att_224x224_A_epoch_249.pth"
+        
+        print("------ model = resnet--------")
+        # resnet18 was trained on an input resolution of 224x224
+        self.width = 224
+        self.height = 224
+        self.model_weights = (
+            "resnet18_baseline_att_224x224_A_epoch_249.pth"
+        )
+        self.optimized_model = (
+            "resnet18_baseline_att_224x224_A_epoch_249_trt.pth"
+        )
+        self.the_model = (
+            trt_pose.models.resnet18_baseline_att(
+                self.num_parts, 2 * self.num_links
             )
-            self.optimized_model = (
-                "resnet18_baseline_att_224x224_A_epoch_249_trt.pth"
-            )
-            self.the_model = (
-                trt_pose.models.resnet18_baseline_att(
-                    self.num_parts, 2 * self.num_links
-                )
-                .cuda()
-                .eval()
-            )
-        else:
-            print("------ model = densenet--------")
-            # densenet121 was trained on an input resolution of 256x256
-            self.width = 256
-            self.height = 256
-            self.model_weights = (
-                "densenet121_baseline_att_256x256_b_epoch_160.pth"
-            )
-            self.optimized_model = (
-                "densenet121_baseline_att_256x256_B_epoch_160_trt.pth"
-            )
-            self.the_model = (
-                trt_pose.models.densenet121_baseline_att(
-                    self.num_parts, 2 * self.num_links
-                )
-                .cuda()
-                .eval()
-            )
+            .cuda()
+            .eval()
+        )
+        
 
     def load_weights(self):
         """Load the model weights.
@@ -98,15 +81,6 @@ class Model:
         # Create sample data used to optimize with TensorRT
         self.data = torch.zeros((1, 3, self.height, self.width)).cuda()
         # Optimize and save results if it's not already optimized
-        if not os.path.exists(self.optimized_model):
-            self.the_model.load_state_dict(torch.load(self.model_weights()))
-            model_trt = torch2trt.torch2trt(
-                self.the_model,
-                [self.data],
-                fp16_mode=True,  # use reduced half precision
-                max_workspace_size=1 << 25,
-            )
-            torch.save(model_trt.state_dict(), self.optimized_model)
 
         self.model_trt = TRTModule()
         self.model_trt.load_state_dict(torch.load(self.optimized_model))
@@ -188,7 +162,7 @@ def main():
     # Construct and load the model
     model = Model(pose_annotations=human_pose)
     model.load_model(args.model)
-    model.load_weights()
+    #model.load_weights()
     model.get_optimized()
     model.log_fps()
     print("Set up model")
@@ -224,6 +198,8 @@ def main():
         drawn = draw(resized_img, counts, objects, peaks, t, draw_objects)
         if camera.out:
             camera.out.write(drawn)
+        cv2.imshow('flab2ab',drawn)
+        cv2.waitkey(1)
         count += 1
 
     # Clean up resources
