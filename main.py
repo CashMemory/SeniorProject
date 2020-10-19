@@ -12,11 +12,16 @@ def ReceiveInstruction(socket):
     try:
 
         instruction = socket.recv(4096)
+        #do the function(instruction)
+        
+
+
 
         
 
     except:
         #Handle exception
+        exit()
 
     #Parse instruction
 
@@ -40,6 +45,8 @@ def InitializeModel():
 
 def main():
 
+    #initialize model
+    
     camera = Camera()
     
     HOST = '127.0.0.1'
