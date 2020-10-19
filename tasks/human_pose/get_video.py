@@ -168,7 +168,8 @@ def main():
     print("Set up model")
 
     # Set up the camera
-    camera = Camera(width=WIDTH, height=HEIGHT)
+    #camera = Camera(width=WIDTH, height=HEIGHT)
+    camera = Camera(width=640, height=480)
     camera.capture_video("mp4v", args.output)
     assert camera.cap is not None, "Camera Open Error"
     print("Set up camera")
