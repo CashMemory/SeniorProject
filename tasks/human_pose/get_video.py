@@ -132,8 +132,8 @@ class Camera:
 
 
 # Image constants
-WIDTH = 640
-HEIGHT = 480
+WIDTH = 224
+HEIGHT = 224
 X_compress = 640.0 / WIDTH * 1.0
 Y_compress = 480.0 / HEIGHT * 1.0
 
@@ -195,7 +195,7 @@ def main():
         counts, objects, peaks = model.execute_neural_net(
             data=preprocessed, parser=parse_objects
         )
-        print(counts[0])
+        
         
         drawn = draw(image, counts, objects, peaks, t)
         if camera.out:
