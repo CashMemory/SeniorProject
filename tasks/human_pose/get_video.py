@@ -2,6 +2,12 @@ import argparse
 import json
 import os.path
 import time
+import http.server
+import socketserver
+
+import threading
+from SocketServer import ThreadingMixIn
+
 
 import cv2
 import PIL.Image
@@ -20,24 +26,23 @@ from src.camera import Camera
 from src.helper import draw, preprocess, WIDTH, HEIGHT
 from src.model import Model
 
+class RequestHandler(http.server.SimpleHTTPRequestHandler):
+        def do_POST(self):
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
 
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write("Content-type: text/html<BR><BR>")
+            self.wfile.write("<HTML>POST OK.<BR><BR>")
 
-
-# Image constants
-#WIDTH = 224
-#$HEIGHT = 224
-#X_compress = 640.0 / WIDTH * 1.0
-#Y_compress = 480.0 / HEIGHT * 1.0
-
-# Image processing constants
-
-
+        
 
 def main():
 
     print("Beginning script")
     parser = argparse.ArgumentParser(description="TensorRT pose estimation")
-    parser.add_argument("--model", type=str, default="resnet")
+  
     parser.add_argument("--output", type=str, default="/tmp/output.mp4")
     parser.add_argument("--limit", type=int, default=500)
     args = parser.parse_args()
@@ -51,8 +56,8 @@ def main():
     
     # Construct and load the model
     model = Model(pose_annotations=human_pose)
-    model.load_model(args.model)
-    #model.load_weights()
+    model.load_model("resnet")
+    
     model.get_optimized()
     model.log_fps()
     print("Set up model")
@@ -65,7 +70,19 @@ def main():
 
     # Set up callable class used to parse the objects from the neural network
     parse_objects = ParseObjects(topology)  # from trt_pose.parse_objects
-    #draw_objects = DrawObjects(topology)  # from trt_pose.draw_objects
+    
+
+
+    #Spin up server
+    PORT = 42069
+
+    
+    Handler = RequestHandler
+ 
+    
+    server = http.server.ThreadingHTTPServer(('',PORT),Handler)
+    server.serve_forever()
+
 
     print("Executing...")
     # Execute while the camera is open and we haven't reached the time limit
