@@ -175,7 +175,7 @@ def main():
 
     # Set up callable class used to parse the objects from the neural network
     parse_objects = ParseObjects(topology)  # from trt_pose.parse_objects
-    draw_objects = DrawObjects(topology)  # from trt_pose.draw_objects
+    #draw_objects = DrawObjects(topology)  # from trt_pose.draw_objects
 
     print("Executing...")
     # Execute while the camera is open and we haven't reached the time limit
@@ -195,11 +195,13 @@ def main():
         counts, objects, peaks = model.execute_neural_net(
             data=preprocessed, parser=parse_objects
         )
-        drawn = draw(resized_img, counts, objects, peaks, t, draw_objects)
+        print(counts[0])
+        
+        drawn = draw(image, counts, objects, peaks, t)
         if camera.out:
             camera.out.write(drawn)
         cv2.imshow('flab2ab',drawn)
-        cv2.waitkey(1)
+        cv2.waitKey(1)
         count += 1
 
     # Clean up resources
@@ -249,7 +251,7 @@ def get_keypoint(humans, hnum, peaks):
     return kpoint
 
 
-def draw(src, counts, objects, peaks, t, drawer):
+def draw(src, counts, objects, peaks, t):
     color = (0, 255, 0)  # green
     fps = 1.0 / (time.time() - t)
     for i in range(counts[0]):
@@ -261,7 +263,6 @@ def draw(src, counts, objects, peaks, t, drawer):
                 cv2.circle(src, (x, y), 3, color, 2)
                 cv2.putText(src, "%d" % int(keypoints[j][0]), (x + 5, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
                 cv2.circle(src, (x, y), 3, color, 2)
-        drawer(img, counts, objects, peaks)
     cv2.putText(
         src,
         "FPS: %d" % fps,
