@@ -2,6 +2,7 @@ import time
 import torch
 import cv2
 
+import PIL.Image
 
 def preprocess(image):
     """Preprocess an image, which is given in BGR8 / HWC format
