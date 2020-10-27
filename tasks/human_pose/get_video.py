@@ -8,7 +8,6 @@ import socketserver
 import threading
 from SocketServer import ThreadingMixIn
 
-
 import cv2
 import PIL.Image
 import torch
@@ -26,27 +25,33 @@ from src.camera import Camera
 from src.helper import draw, preprocess, WIDTH, HEIGHT
 from src.model import Model
 
-class RequestHandler(http.server.SimpleHTTPRequestHandler):
-        def do_POST(self):
-            content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length)
+from flask import Flask
+from flask_restful import Api, Resource
+from api import CurlAPI
 
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write("Content-type: text/html<BR><BR>")
-            self.wfile.write("<HTML>POST OK.<BR><BR>")
+executing = False
 
-        
+
+# def LeftBicepCurl():
+
+#     curl = LeftBicepCurl()
+   
+#     executing = True
+
+
+
+#     return 
+
+
+
+
 
 def main():
 
-    print("Beginning script")
-    parser = argparse.ArgumentParser(description="TensorRT pose estimation")
-  
-    parser.add_argument("--output", type=str, default="/tmp/output.mp4")
-    parser.add_argument("--limit", type=int, default=500)
-    args = parser.parse_args()
+    
 
+
+    print("Beginning script")
     # Load the annotation file and create a topology tensor
     with open("human_pose.json", "r") as f:
         human_pose = json.load(f)
@@ -64,30 +69,28 @@ def main():
 
     # Set up the camera
     camera = Camera(width=640, height=480)
-    camera.capture_video("mp4v", args.output)
+    camera.capture_video("mp4v", "/tmp/output.mp4")
     assert camera.cap is not None, "Camera Open Error"
     print("Set up camera")
 
     # Set up callable class used to parse the objects from the neural network
     parse_objects = ParseObjects(topology)  # from trt_pose.parse_objects
+
+    app = Flask(__name__)
+    api = Api(app)
+
+    api.add_resource(CurlAPI, '/curl')
+    app.run(threaded=True)
+
+    while not executing:
+        pass
     
-
-
-    #Spin up server
-    PORT = 42069
-
-    
-    Handler = RequestHandler
- 
-    
-    server = http.server.ThreadingHTTPServer(('',PORT),Handler)
-    server.serve_forever()
-
-
     print("Executing...")
     # Execute while the camera is open and we haven't reached the time limit
+
+    exit()
     count = 0
-    time_limit = args.limit
+    time_limit = 200
     while camera.cap.isOpened() and count < time_limit:
         t = time.time()
         succeeded, image = camera.cap.read()
