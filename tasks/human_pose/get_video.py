@@ -2,11 +2,10 @@ import argparse
 import json
 import os.path
 import time
-import http.server
-import socketserver
+
 
 import threading
-from SocketServer import ThreadingMixIn
+
 
 import cv2
 import PIL.Image
@@ -27,7 +26,8 @@ from src.model import Model
 
 from flask import Flask
 from flask_restful import Api, Resource
-from api import CurlAPI
+
+from src.api import CurlAPI
 
 executing = False
 
@@ -47,9 +47,6 @@ executing = False
 
 
 def main():
-
-    
-
 
     print("Beginning script")
     # Load the annotation file and create a topology tensor
