@@ -3,7 +3,8 @@ from flask import Flask
 
 from flask_restful import Api, Resource
 
-from get_video import LeftBicepCurl, executing
+from exercise import LeftBicepCurl
+from get_video import executing
 
 class CurlAPI(Resource):
     def get(self):
