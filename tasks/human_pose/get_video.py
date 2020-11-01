@@ -20,17 +20,37 @@ from trt_pose.parse_objects import ParseObjects
 from trt_pose.draw_objects import DrawObjects 
 
 
-from src.camera import Camera
-from src.helper import draw, preprocess, WIDTH, HEIGHT
-from src.model import Model
+from camera import Camera
+from helper import draw, preprocess, WIDTH, HEIGHT
+from model import Model
+from exercise import LeftBicepCurl
 
 from flask import Flask
 from flask_restful import Api, Resource
 
-from src.api import CurlAPI
+# from networking import CurlAPI
 
 executing = False
 
+class CurlAPI(Resource):
+    def get(self):
+
+        curl = LeftBicepCurl()
+        global executing
+        executing = True
+
+       
+
+        return {'curl':f'{id}'}
+    def post(self):
+        pass
+
+    def put(self,id):
+        return{'put':id}
+        
+
+    def delete(self):
+        pass
 
 # def LeftBicepCurl():
 
@@ -77,20 +97,22 @@ def main():
     api = Api(app)
 
     api.add_resource(CurlAPI, '/curl')
-    app.run(threaded=True)
+    t = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0"})  # threaded=True)
+    t.start()
 
+    print("After networking")
     while not executing:
         pass
     
     print("Executing...")
     # Execute while the camera is open and we haven't reached the time limit
 
-    exit()
     count = 0
     time_limit = 200
     while camera.cap.isOpened() and count < time_limit:
         t = time.time()
         succeeded, image = camera.cap.read()
+        print("Frame captured")
         if not succeeded:
             print("Camera read Error")
             break
@@ -108,6 +130,7 @@ def main():
         if camera.out:
             camera.out.write(drawn)
         cv2.imshow('flab2ab',drawn)
+        #cv2.imshow("test", image)
         cv2.waitKey(1)
         count += 1
 
