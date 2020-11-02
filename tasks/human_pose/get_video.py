@@ -28,42 +28,30 @@ from exercise import LeftBicepCurl
 from flask import Flask
 from flask_restful import Api, Resource
 
-# from networking import CurlAPI
-
-executing = False
+executing = False       #global flag for session start
+exercise = None         #global exercise object required for model inference and drawing
+stopExercise = False    #global flag for stopping exercise after loop ends
 
 class CurlAPI(Resource):
-    def get(self):
-
-        curl = LeftBicepCurl()
+    def get(self):        
+        global exercise
+        exercise = LeftBicepCurl()
+        #curl = LeftBicepCurl()
         global executing
         executing = True
-
-       
-
         return {'curl':f'{id}'}
-    def post(self):
-        pass
 
-    def put(self,id):
-        return{'put':id}
-        
+class RepCountAPI(Resource):
+    def get(self):  
+        global exercise    
+        reps = exercise.rep_count if exercise else 0
+        return {'repCount':f'{reps}'}
 
-    def delete(self):
-        pass
-
-# def LeftBicepCurl():
-
-#     curl = LeftBicepCurl()
-   
-#     executing = True
-
-
-
-#     return 
-
-
-
+class EndExerciseAPI(Resource):
+    def get(self):
+        global stopExercise
+        stopExercise = True          
+        return {'endExercise':f'{id}'}
 
 
 def main():
@@ -96,7 +84,12 @@ def main():
     app = Flask(__name__)
     api = Api(app)
 
+
+    #add endpoints
     api.add_resource(CurlAPI, '/curl')
+    api.add_resource(RepCountAPI, '/repCount')
+    api.add_resource(EndExerciseAPI, '/endExercise')
+
     t = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0"})  # threaded=True)
     t.start()
 
@@ -107,32 +100,42 @@ def main():
     print("Executing...")
     # Execute while the camera is open and we haven't reached the time limit
 
-    count = 0
-    time_limit = 200
-    while camera.cap.isOpened() and count < time_limit:
-        t = time.time()
-        succeeded, image = camera.cap.read()
-        print("Frame captured")
-        if not succeeded:
-            print("Camera read Error")
-            break
+    global exercise, stopExercise                 
 
-        resized_img = cv2.resize(
-            image, dsize=(WIDTH, HEIGHT), interpolation=cv2.INTER_AREA
-        )
-        preprocessed = preprocess(resized_img)
-        counts, objects, peaks = model.execute_neural_net(
-            data=preprocessed, parser=parse_objects
-        )
-        
-        
-        drawn = draw(image, counts, objects, peaks, t)
-        if camera.out:
-            camera.out.write(drawn)
-        cv2.imshow('flab2ab',drawn)
-        #cv2.imshow("test", image)
-        cv2.waitKey(1)
-        count += 1
+    while True:
+        while camera.cap.isOpened() and exercise:
+            t = time.time()
+            succeeded, image = camera.cap.read()
+            print("Frame captured")
+            if not succeeded:
+                print("Camera read Error")
+                break
+
+            resized_img = cv2.resize(
+                image, dsize=(WIDTH, HEIGHT), interpolation=cv2.INTER_AREA
+            )
+            preprocessed = preprocess(resized_img)
+            counts, objects, peaks = model.execute_neural_net(
+                data=preprocessed, parser=parse_objects
+            )
+            
+            drawn = draw(image, counts, objects, peaks, t)
+            if camera.out:
+                camera.out.write(drawn)
+            cv2.imshow('flab2ab',drawn)
+            #cv2.imshow("test", image)
+            cv2.waitKey(1)
+
+            #TODO: Remove after exercise implementation
+            time.sleep(2)
+            exercise.rep_count += 1
+            #end remove
+            
+
+            if stopExercise:
+                exercise = None
+                stopExercise = False
+                print("exercise ended successfully")
 
     # Clean up resources
     print("Cleaning up")
