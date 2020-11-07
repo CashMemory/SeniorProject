@@ -8,6 +8,7 @@ class Camera:
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self.out = None
+        self.frame = None #stores the drawn frame
 
     def capture_video(self, codec, output_loc):
         """

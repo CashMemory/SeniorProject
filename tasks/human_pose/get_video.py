@@ -103,10 +103,10 @@ def main():
 
     @app.route('/getFrame')
     def getFrame():
-        global drawn
+        nonlocal camera
         while True:
-            if drawn is not None:
-                flag, encoded = cv2.imencode(".jpg", drawn)
+            if camera.frame is not None:
+                flag, encoded = cv2.imencode(".jpg", camera.frame)
                 return Response(gen(encoded.tobytes()), mimetype="multipart/x-mixed-replace; boundary=frame")
             else:
                 return Response("<h1>500 Internal Server Erro</h1>", status=500, mimetype='text/html')
@@ -150,7 +150,9 @@ def main():
             )
             
             # exercise.draw()
+
             drawn = draw(image, counts, objects, peaks, t)
+            camera.frame = drawn
 
 
             if camera.out:
