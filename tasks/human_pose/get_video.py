@@ -93,20 +93,38 @@ def main2():
     def index():
         return render_template('index.html')
 
-    def gen(frame):
-        while True:
-            yield (b'--frame\r\n' 
-                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
-
     @app.route('/getFrame')
-    def getFrame():
+    def getFrame2():
+        return Response(gen2(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
+    def gen2():
         nonlocal camera
+        
         while True:
-            if camera.frame is not None:
-                flag, encoded = cv2.imencode(".jpg", camera.frame)
-                return Response(gen(encoded.tobytes()), mimetype="multipart/x-mixed-replace; boundary=frame")
-            else:
-                return Response("<h1>500 Internal Server Erro</h1>", status=500, mimetype='text/html')
+            if camera.frame is None:
+                continue
+
+            success, encoded = cv2.imencode(".jpg", camera.frame)
+            
+            if not success: 
+                continue
+
+            yield(b'--frame\r\n' + b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded) +b'\r\n')
+
+    # def gen(frame):
+    #     while True:
+    #         yield (b'--frame\r\n' 
+    #                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+
+    # @app.route('/getFrame')
+    # def getFrame():
+    #     nonlocal camera
+    #     while True:
+    #         if camera.frame is not None:
+    #             flag, encoded = cv2.imencode(".jpg", camera.frame)
+    #             return Response(gen(encoded.tobytes()), mimetype="multipart/x-mixed-replace; boundary=frame")
+    #         else:
+    #             return Response("<h1>500 Internal Server Erro</h1>", status=500, mimetype='text/html')
 
     
 
@@ -119,6 +137,8 @@ def main2():
 
     t = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0"})  # threaded=True)
     t.start()
+
+    print('main 2 execution')
 
     while True:
         while camera.cap.isOpened():
