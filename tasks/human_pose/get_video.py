@@ -142,23 +142,16 @@ def main():
                 data=preprocessed, parser=parse_objects
             )
             
-            # exercise.draw()
-
-            drawn = draw(image, counts, objects, peaks, t)
+            drawn = exercise.draw(image, counts, objects, peaks, t)
+            #drawn = draw(image, counts, objects, peaks, t)
             camera.frame = drawn
 
 
             if camera.out:
                 camera.out.write(drawn)
             cv2.imshow('flab2ab',drawn)
-            #cv2.imshow("test", image)
             cv2.waitKey(1)
-
-            #TODO: Remove after exercise implementation
-            exercise.rep_count += 1
-            #end remove
-            
-
+                   
             if stopExercise:
                 exercise = None
                 stopExercise = False
