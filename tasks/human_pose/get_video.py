@@ -54,103 +54,6 @@ class EndExerciseAPI(Resource):
         stopExercise = True          
         return {'endExercise':f'{id}'}
 
-#class GetIndexAPI(Resource):
-#    def get(self):
-#        return render_template("index.html")
-
-
-#class GetFrameAPI(Resource):
-def main2():
-    print("Beginning script")
-    # Load the annotation file and create a topology tensor
-    with open("human_pose.json", "r") as f:
-        human_pose = json.load(f)
-
-    # Create a topology tensor (intermediate DS that describes part linkages)
-    topology = trt_pose.coco.coco_category_to_topology(human_pose)
-    
-    # Construct and load the model
-    model = Model(pose_annotations=human_pose)
-    model.load_model("resnet")
-    
-    model.get_optimized()
-    model.log_fps()
-    print("Set up model")
-
-    # Set up the camera
-    camera = Camera(width=640, height=480)
-    camera.capture_video("mp4v", "/tmp/output.mp4")
-    assert camera.cap is not None, "Camera Open Error"
-    print("Set up camera")
-
-    # Set up callable class used to parse the objects from the neural network
-    parse_objects = ParseObjects(topology)  # from trt_pose.parse_objects
-
-    app = Flask(__name__)
-    api = Api(app)
-
-    @app.route('/')
-    def index():
-        return render_template('index.html')
-
-    @app.route('/getFrame')
-    def getFrame2():
-        return Response(gen2(), mimetype="multipart/x-mixed-replace; boundary=frame")
-
-    def gen2():
-        nonlocal camera
-        
-        while True:
-            if camera.frame is None:
-                continue
-
-            success, encoded = cv2.imencode(".jpg", camera.frame)
-            
-            if not success: 
-                continue
-
-            yield(b'--frame\r\n' + b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded) +b'\r\n')
-
-    # def gen(frame):
-    #     while True:
-    #         yield (b'--frame\r\n' 
-    #                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
-
-    # @app.route('/getFrame')
-    # def getFrame():
-    #     nonlocal camera
-    #     while True:
-    #         if camera.frame is not None:
-    #             flag, encoded = cv2.imencode(".jpg", camera.frame)
-    #             return Response(gen(encoded.tobytes()), mimetype="multipart/x-mixed-replace; boundary=frame")
-    #         else:
-    #             return Response("<h1>500 Internal Server Erro</h1>", status=500, mimetype='text/html')
-
-    
-
-    #add endpoints
-    api.add_resource(CurlAPI, '/curl')
-    api.add_resource(RepCountAPI, '/repCount')
-    api.add_resource(EndExerciseAPI, '/endExercise')
-    #api.add_resource(GetFrameAPI, '/getFrame')
-    #api.add_resource(GetIndexAPI, '/')
-
-    t = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0"})  # threaded=True)
-    t.start()
-
-    print('main 2 execution')
-
-    while True:
-        while camera.cap.isOpened():
-            succeeded, image = camera.cap.read()
-            camera.frame = image
-            print("Frame captured")
-            if not succeeded:
-                print("Camera read Error")
-                break
-
-
-
 def main():
 
     print("Beginning script")
@@ -185,20 +88,23 @@ def main():
     def index():
         return render_template('index.html')
 
-    def gen(frame):
-        while True:
-            yield (b'--frame\r\n' 
-                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
-
     @app.route('/getFrame')
     def getFrame():
+        return Response(gen(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
+    def gen():
         nonlocal camera
+        
         while True:
-            if camera.frame is not None:
-                flag, encoded = cv2.imencode(".jpg", camera.frame)
-                return Response(gen(encoded.tobytes()), mimetype="multipart/x-mixed-replace; boundary=frame")
-            else:
-                return Response("<h1>500 Internal Server Erro</h1>", status=500, mimetype='text/html')
+            if camera.frame is None:
+                continue
+
+            success, encoded = cv2.imencode(".jpg", camera.frame)
+            
+            if not success: 
+                continue
+
+            yield(b'--frame\r\n' + b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded) +b'\r\n')
 
     
 
@@ -206,9 +112,7 @@ def main():
     api.add_resource(CurlAPI, '/curl')
     api.add_resource(RepCountAPI, '/repCount')
     api.add_resource(EndExerciseAPI, '/endExercise')
-    #api.add_resource(GetFrameAPI, '/getFrame')
-    #api.add_resource(GetIndexAPI, '/')
-
+    
     t = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0"})  # threaded=True)
     t.start()
 
@@ -270,4 +174,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main2()
+    main()
