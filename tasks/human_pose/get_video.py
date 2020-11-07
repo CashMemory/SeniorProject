@@ -25,12 +25,13 @@ from helper import draw, preprocess, WIDTH, HEIGHT
 from model import Model
 from exercise import LeftBicepCurl
 
-from flask import Flask
+from flask import Flask, Response, render_template
 from flask_restful import Api, Resource
 
 executing = False       #global flag for session start
 exercise = None         #global exercise object required for model inference and drawing
 stopExercise = False    #global flag for stopping exercise after loop ends
+drawn = None            #global for our image
 
 class CurlAPI(Resource):
     def get(self):        
@@ -52,6 +53,13 @@ class EndExerciseAPI(Resource):
         global stopExercise
         stopExercise = True          
         return {'endExercise':f'{id}'}
+
+#class GetIndexAPI(Resource):
+#    def get(self):
+#        return render_template("index.html")
+
+
+#class GetFrameAPI(Resource):
 
 
 def main():
@@ -84,11 +92,33 @@ def main():
     app = Flask(__name__)
     api = Api(app)
 
+    @app.route('/')
+    def index():
+        return render_template('index.html')
+
+    def gen(frame):
+        while True:
+            yield (b'--frame\r\n' 
+                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+
+    @app.route('/getFrame')
+    def getFrame():
+        global drawn
+        while True:
+            if drawn is not None:
+                flag, encoded = cv2.imencode(".jpg", drawn)
+                return Response(gen(encoded.tobytes()), mimetype="multipart/x-mixed-replace; boundary=frame")
+            else:
+                return Response("<h1>500 Internal Server Erro</h1>", status=500, mimetype='text/html')
+
+    
 
     #add endpoints
     api.add_resource(CurlAPI, '/curl')
     api.add_resource(RepCountAPI, '/repCount')
     api.add_resource(EndExerciseAPI, '/endExercise')
+    #api.add_resource(GetFrameAPI, '/getFrame')
+    #api.add_resource(GetIndexAPI, '/')
 
     t = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0"})  # threaded=True)
     t.start()
@@ -100,7 +130,7 @@ def main():
     print("Executing...")
     # Execute while the camera is open and we haven't reached the time limit
 
-    global exercise, stopExercise                 
+    global exercise, stopExercise, drawn
 
     while True:
         while camera.cap.isOpened() and exercise:
@@ -119,7 +149,10 @@ def main():
                 data=preprocessed, parser=parse_objects
             )
             
+            # exercise.draw()
             drawn = draw(image, counts, objects, peaks, t)
+
+
             if camera.out:
                 camera.out.write(drawn)
             cv2.imshow('flab2ab',drawn)
@@ -127,7 +160,6 @@ def main():
             cv2.waitKey(1)
 
             #TODO: Remove after exercise implementation
-            time.sleep(2)
             exercise.rep_count += 1
             #end remove
             
