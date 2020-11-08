@@ -240,6 +240,9 @@ class ShoulderPress():
                                 radius=3, 
                                 color=(0, 0, 255), 
                                 thickness=2)
+        
+        cv2.putText(src , "FPS: %f" % (fps), (20, 20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
+        cv2.putText(src , "Rep: %d" % (self.rep_count), (40, 40),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
                 #invert
         return src
 
