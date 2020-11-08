@@ -197,7 +197,7 @@ class ShoulderPress():
             
             #see if data collected
             for point in self.joints:
-                if xy_dat[point] is None:
+                if xy_dat.get(point) is None:
                     print("xy_dat is incomplete!")
                     has_data = False
 
