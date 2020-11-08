@@ -217,7 +217,9 @@ class ShoulderPress():
                 #TODO more sophisticated plane chekcing
                 #Red
                 if xy_dat[7][1] > upper_threshold and xy_dat[8][1] > upper_threshold:
-                    if self.rep_stack[-1] == "blue": 
+                    if len(self.rep_stack) == 0:
+                        self.rep_stack.append("blue")
+                    if self.rep_stack[-1] == "blue":
                         self.rep_stack.append("red")
                     for point in self.joints:
                         cv2.circle(img=src, 
