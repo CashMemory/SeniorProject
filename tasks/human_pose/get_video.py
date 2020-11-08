@@ -23,7 +23,7 @@ from trt_pose.draw_objects import DrawObjects
 from camera import Camera
 from helper import draw, preprocess, WIDTH, HEIGHT
 from model import Model
-from exercise import LeftBicepCurl
+from exercise import LeftBicepCurl, RightBicepCurl, ShoulderPress, Squat
 
 from flask import Flask, Response, render_template
 from flask_restful import Api, Resource
@@ -37,10 +37,33 @@ class CurlAPI(Resource):
     def get(self):        
         global exercise
         exercise = LeftBicepCurl()
-        #curl = LeftBicepCurl()
         global executing
         executing = True
         return {'curl':f'{id}'}
+
+class RightCurlAPI(Resource):
+    def get(self):        
+        global exercise
+        exercise = RightBicepCurl()
+        global executing
+        executing = True
+        return {'rightCurl':f'{id}'}
+
+class ShoulderPressAPI(Resource):
+    def get(self):        
+        global exercise
+        exercise = ShoulderPress()
+        global executing
+        executing = True
+        return {'shoulderPress':f'{id}'}
+
+class SquatAPI(Resource):
+    def get(self):
+        global exercise
+        exercise = Squat()
+        global executing
+        executing = True
+        return {'squat':f'{id}'}
 
 class RepCountAPI(Resource):
     def get(self):  
@@ -110,6 +133,9 @@ def main():
 
     #add endpoints
     api.add_resource(CurlAPI, '/curl')
+    api.add_resource(RightCurlAPI, '/rightCurl')
+    api.add_resource(ShoulderPressAPI, '/shoulderPress')
+    api.add_resource(SquatAPI, '/squat')
     api.add_resource(RepCountAPI, '/repCount')
     api.add_resource(EndExerciseAPI, '/endExercise')
     
