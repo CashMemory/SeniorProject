@@ -28,14 +28,17 @@ class Exercise:
         self.y_dist = 0
         self.rep_count = 0
         self.rep_stack = []
-        self.xy_data = [] #holds the current xy data for the relevant joints
         
-class LeftBicepCurl(Exercise):
+class LeftBicepCurl():
 
     def __init__(self):
-        super().__init__(self,[5,7,9],[150,90,15],15,90,150)
+        self.joints = [5,7,9]
+        self.angles = [150,90,15]
+        self.rep_count = 0
+        self.rep_stack = []
      
     def draw(self, src, counts, objects, peaks, t):
+        print("!!!!! Bicep Drawing !!!!!")
         xy_dat = []
         color = (0, 255, 0)
         fps = 1.0 / (time.time() - t)
@@ -47,6 +50,7 @@ class LeftBicepCurl(Exercise):
                     x = round(keypoints[j][2] * WIDTH * X_compress)
                     y = round(keypoints[j][1] * HEIGHT * Y_compress)
                     xy_dat.append((x,y))
+                    print("Circles on joints")
                     cv2.circle(src, (x, y), 3, color, 2)
                     cv2.putText(src , "%d" % int(keypoints[j][0]), (x + 5, y),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1)
                     cv2.circle(src, (x, y), 3, color, 2)
