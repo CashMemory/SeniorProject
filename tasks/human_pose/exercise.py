@@ -66,6 +66,8 @@ class LeftBicepCurl():
                                 
                 # Red
                 if angle < 60:
+                    if len(self.rep_stack) == 0:
+                        self.rep_stack.append("red")
                     if self.rep_stack[-1] == "blue": 
                         self.rep_stack.append("red")
                     for data_point in xy_dat:
