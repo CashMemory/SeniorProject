@@ -33,13 +33,13 @@ exercise = None         #global exercise object required for model inference and
 stopExercise = False    #global flag for stopping exercise after loop ends
 drawn = None            #global for our image
 
-class CurlAPI(Resource):
+class LeftCurlAPI(Resource):
     def get(self):        
         global exercise
         exercise = LeftBicepCurl()
         global executing
         executing = True
-        return {'curl':f'{id}'}
+        return {'leftCurl':f'{id}'}
 
 class RightCurlAPI(Resource):
     def get(self):        
@@ -76,6 +76,10 @@ class EndExerciseAPI(Resource):
         global stopExercise
         stopExercise = True          
         return {'endExercise':f'{id}'}
+
+class StartSessionAPI(Resource):
+    def get(self):
+        return {'startSession':f'{id}'}
 
 def main():
 
@@ -132,12 +136,13 @@ def main():
     
 
     #add endpoints
-    api.add_resource(CurlAPI, '/curl')
+    api.add_resource(LeftCurlAPI, '/leftCurl')
     api.add_resource(RightCurlAPI, '/rightCurl')
     api.add_resource(ShoulderPressAPI, '/shoulderPress')
     api.add_resource(SquatAPI, '/squat')
     api.add_resource(RepCountAPI, '/repCount')
     api.add_resource(EndExerciseAPI, '/endExercise')
+    api.add_resource(StartSessionAPI, '/startSession')
     
     t = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0"})  # threaded=True)
     t.start()
