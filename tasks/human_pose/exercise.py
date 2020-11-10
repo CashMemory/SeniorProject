@@ -170,6 +170,16 @@ class ShoulderPress():
         self.angles = [150,90,15]
         self.rep_count = 0
         self.rep_stack = []
+        self.arms = [0] * 30
+        self.counter = 0  # Counting samples for arm length
+
+    def get_arm_length(self):
+        # Check for a complete sampling of arm lengths
+        if self.arms[-1] != 0:
+            self.arms.sort()
+            return self.arms[15]  # Get the median
+        else:
+            return 0
     
     def draw(self, src, counts, objects, peaks, t):
         #TODO: finish implementation
@@ -208,27 +218,43 @@ class ShoulderPress():
                 lshoulder_xy = xy_dat[5]
                 lelbow_xy = xy_dat[7]
                 lwrist_xy = xy_dat[9]
-                arm_length = distance_between_points(lshoulder_xy,lelbow_xy) + distance_between_points(lelbow_xy, lwrist_xy)
+                #arm_length = distance_between_points(lshoulder_xy,lelbow_xy) + distance_between_points(lelbow_xy, lwrist_xy)
+                arm_length = distance_between_points(lshoulder_xy,lelbow_xy) 
+                self.arms[self.counter % len(self.arms)] = arm_length
+                self.counter += 1
+                arm_length = self.get_arm_length()
+                if arm_length == 0:
+                    continue
+
                 #create plane some % of arm length above neck and some lower plane
-                upper_threshold = neck_xy[1] + (.75 * arm_length)
-                lower_threshold = neck_xy[1] + (.25 * arm_length)
+                # y values start at 0 in left corner -- grow larger as you move *DOWN*
+                top_threshold = neck_xy[1] - (.5 * arm_length)
+                cv2.circle(img=src, center=(neck_xy[0], int(top_threshold)), radius=8, color=(255, 0, 255), thickness=2)
+                #bottom_threshold = neck_xy[1] - (.15 * arm_length) -- TEMP -- wrist
+                # Bottom threshold for elbow is just neck
+                bottom_threshold = neck_xy[1] 
                 #check to see if both wrists are above plane
 
                 #TODO more sophisticated plane chekcing
-                #Red
-                if xy_dat[7][1] > upper_threshold and xy_dat[8][1] > upper_threshold:
+                #Red -- (top of your range of motion)
+                if xy_dat[7][1] < top_threshold and xy_dat[8][1] < top_threshold:
+                    print("!!!!! Red !!!!!")
                     if len(self.rep_stack) == 0:
-                        self.rep_stack.append("blue")
+                        continue
+                        #self.rep_stack.append("blue")
                     if self.rep_stack[-1] == "blue":
                         self.rep_stack.append("red")
                     for point in self.joints:
+                        print("Painting red")
                         cv2.circle(img=src, 
                                 center=xy_dat[point], 
                                 radius=3, 
-                                color=(255, 0, 0), 
+                                color=(0, 0, 255), 
                                 thickness=2)
-                # Blue
-                elif xy_dat[7][1] < lower_threshold and xy_dat[8][1] < lower_threshold:
+
+                # Blue -- (bottom of your range of motion)
+                elif xy_dat[7][1] > bottom_threshold and xy_dat[8][1] > bottom_threshold:
+                    print("!!!!! Blue !!!!!")
                     if len(self.rep_stack) == 0:
                         self.rep_stack.append("blue")
                     elif self.rep_stack[-1] == "red":
@@ -238,7 +264,7 @@ class ShoulderPress():
                         cv2.circle(img=src, 
                                 center=xy_dat[point], 
                                 radius=3, 
-                                color=(0, 0, 255), 
+                                color=(255, 0, 0), 
                                 thickness=2)
         
         cv2.putText(src , "FPS: %f" % (fps), (20, 20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
