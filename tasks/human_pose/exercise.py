@@ -278,7 +278,104 @@ class Squat():
         self.angles = [150,90,15]
         self.rep_count = 0
         self.rep_stack = []
+        self.thighs = [0] * 30
+        self.counter = 0
+
+    def get_thigh_length(self):
+        # Check for a complete sampling of thigh lengths
+        if self.thighs[-1] != 0:
+            self.thighs.sort()
+            return self.thighs[15]  # Get the median
+        else:
+            return 0
 
     def draw(self, src, counts, objects, peaks, t):
-        #TODO implement
-        return
+        print("!!!!! SQUAT !!!!!")
+        xy_dat = {} #make dict
+        #xy_dat = [] #make list
+        color = (0, 255, 0)
+        fps = 1.0 / (time.time() - t)
+        has_data = True
+        #find and draw keypoint locations
+        for i in range(counts[0]):
+            keypoints = get_keypoint(objects, i, peaks)
+
+            #collect all xy data for relevant joints and draw on joints            
+            for j in self.joints:
+                if keypoints[j][1]:
+                    x = round(keypoints[j][2] * WIDTH * X_compress)
+                    y = round(keypoints[j][1] * HEIGHT * Y_compress)
+                    #xy_dat.append((x,y))
+                    xy_dat[j] = (x, y) #add xy data to dictionary
+                    print("Circles on joints")
+                    cv2.circle(src, (x, y), 3, color, 2)
+                    cv2.putText(src , "%d" % int(keypoints[j][0]), (x + 5, y),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1)
+                    cv2.circle(src, (x, y), 3, color, 2)
+            
+            #see if data collected
+            for point in self.joints:
+                if xy_dat.get(point) is None:
+                    print("xy_dat is incomplete!")
+                    has_data = False
+
+            if has_data:
+                
+                
+                #find length of left thigh
+                lhip_xy = xy_dat[11]
+                lknee_xy = xy_dat[13]
+                lankle_xy = xy_dat[15]
+                
+                thigh_length = distance_between_points(lknee_xy,lhip_xy) 
+                self.thighs[self.counter % len(self.thighs)] = arm_length
+                self.counter += 1
+                arm_length = self.get_thigh_length()
+                if arm_length == 0:
+                    continue
+
+                #create plane some % of thigh length above knee and some lower plane
+                # y values start at 0 in left corner -- grow larger as you move *DOWN*
+                top_threshold = lknee_xy[1] - (.5 * thigh_length)
+                #TODO: switch statement for bottom and top for reps
+                cv2.circle(img=src, center=(lknee_xy[0], int(top_threshold)), radius=8, color=(255, 0, 255), thickness=2)
+                
+                # Bottom threshold for elbow is just the knee
+                bottom_threshold = lknee_xy[1] 
+                #check to see if both wrists are above plane
+
+                #TODO more sophisticated plane chekcing
+                #Red -- (top of your range of motion)
+                if xy_dat[11][1] < top_threshold:
+                    print("!!!!! Red !!!!!")
+                    if len(self.rep_stack) == 0:
+                        continue
+                        #self.rep_stack.append("blue")
+                    if self.rep_stack[-1] == "blue":
+                        self.rep_stack.append("red")
+                    for point in self.joints:
+                        print("Painting red")
+                        cv2.circle(img=src, 
+                                center=xy_dat[point], 
+                                radius=3, 
+                                color=(0, 0, 255), 
+                                thickness=2)
+
+                # Blue -- (bottom of your range of motion)
+                elif xy_dat[11][1] > bottom_threshold:
+                    print("!!!!! Blue !!!!!")
+                    if len(self.rep_stack) == 0:
+                        self.rep_stack.append("blue")
+                    elif self.rep_stack[-1] == "red":
+                        self.rep_count += 1
+                        self.rep_stack = []
+                    for point in self.joints:
+                        cv2.circle(img=src, 
+                                center=xy_dat[point], 
+                                radius=3, 
+                                color=(255, 0, 0), 
+                                thickness=2)
+        
+        cv2.putText(src , "FPS: %f" % (fps), (20, 20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
+        cv2.putText(src , "Rep: %d" % (self.rep_count), (40, 40),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
+
+        return src
