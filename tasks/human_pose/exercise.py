@@ -274,7 +274,7 @@ class ShoulderPress():
 
 class Squat():
     def __init__(self):
-        self.joints = [11,12,13,14,15,16]  #LH, RH, LK, RK, LA, RA
+        self.joints = [11,13,15]  #LH, RH, LK, RK, LA, RA
         self.angles = [150,90,15]
         self.rep_count = 0
         self.rep_stack = []
@@ -292,7 +292,6 @@ class Squat():
     def draw(self, src, counts, objects, peaks, t):
         print("!!!!! SQUAT !!!!!")
         xy_dat = {} #make dict
-        #xy_dat = [] #make list
         color = (0, 255, 0)
         fps = 1.0 / (time.time() - t)
         has_data = True
@@ -320,27 +319,31 @@ class Squat():
 
             if has_data:
                 
-                
                 #find length of left thigh
                 lhip_xy = xy_dat[11]
                 lknee_xy = xy_dat[13]
                 lankle_xy = xy_dat[15]
                 
                 thigh_length = distance_between_points(lknee_xy,lhip_xy) 
-                self.thighs[self.counter % len(self.thighs)] = arm_length
+                self.thighs[self.counter % len(self.thighs)] = thigh_length
                 self.counter += 1
-                arm_length = self.get_thigh_length()
-                if arm_length == 0:
+                thigh_length = self.get_thigh_length()
+                if thigh_length == 0:
                     continue
 
                 #create plane some % of thigh length above knee and some lower plane
                 # y values start at 0 in left corner -- grow larger as you move *DOWN*
-                top_threshold = lknee_xy[1] - (.5 * thigh_length)
+                top_threshold = int(lknee_xy[1] - (.75 * thigh_length))
                 #TODO: switch statement for bottom and top for reps
-                cv2.circle(img=src, center=(lknee_xy[0], int(top_threshold)), radius=8, color=(255, 0, 255), thickness=2)
+                print("$$$$ Top:", top_threshold)
+                cv2.line(src, (64, top_threshold), (576, top_threshold), (255, 0, 255), 2)
+                #cv2.circle(img=src, center=(lhip_xy[0], int(top_threshold)), radius=8, color=(255, 0, 255), thickness=2)
                 
                 # Bottom threshold for elbow is just the knee
-                bottom_threshold = lknee_xy[1] 
+                bottom_threshold = int(lknee_xy[1] - (.25 * thigh_length))
+                print("$$$$ Bottom:", bottom_threshold)
+                cv2.line(src, (64, bottom_threshold), (576, bottom_threshold), (255, 0, 255), 2)
+                #cv2.circle(img=src, center=(lhip_xy[0], int(bottom_threshold)), radius=8, color=(255, 0, 255), thickness=2)
                 #check to see if both wrists are above plane
 
                 #TODO more sophisticated plane chekcing
@@ -348,10 +351,10 @@ class Squat():
                 if xy_dat[11][1] < top_threshold:
                     print("!!!!! Red !!!!!")
                     if len(self.rep_stack) == 0:
-                        continue
-                        #self.rep_stack.append("blue")
-                    if self.rep_stack[-1] == "blue":
                         self.rep_stack.append("red")
+                    elif self.rep_stack[-1] == "blue":
+                        self.rep_count += 1
+                        self.rep_stack = []
                     for point in self.joints:
                         print("Painting red")
                         cv2.circle(img=src, 
@@ -364,10 +367,9 @@ class Squat():
                 elif xy_dat[11][1] > bottom_threshold:
                     print("!!!!! Blue !!!!!")
                     if len(self.rep_stack) == 0:
-                        self.rep_stack.append("blue")
+                        continue
                     elif self.rep_stack[-1] == "red":
-                        self.rep_count += 1
-                        self.rep_stack = []
+                        self.rep_stack.append("blue")
                     for point in self.joints:
                         cv2.circle(img=src, 
                                 center=xy_dat[point], 
