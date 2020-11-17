@@ -54,8 +54,6 @@ class LeftBicepCurl():
                     xy_dat.append((x,y))
                     print("Circles on joints")
                     cv2.circle(src, (x, y), 3, color, 2)
-                    cv2.putText(src , "%d" % int(keypoints[j][0]), (x + 5, y),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1)
-                    cv2.circle(src, (x, y), 3, color, 2)
             for point in xy_dat:
                 if point is None:
                         print("xy_dat is incomplete!")
@@ -119,8 +117,6 @@ class RightBicepCurl():
                     y = round(keypoints[j][1] * HEIGHT * Y_compress)
                     xy_dat.append((x,y))
                     print("Circles on joints")
-                    cv2.circle(src, (x, y), 3, color, 2)
-                    cv2.putText(src , "%d" % int(keypoints[j][0]), (x + 5, y),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1)
                     cv2.circle(src, (x, y), 3, color, 2)
 
             #checking for malformed xy data on relevant joints
@@ -198,12 +194,10 @@ class ShoulderPress():
                 if keypoints[j][1]:
                     x = round(keypoints[j][2] * WIDTH * X_compress)
                     y = round(keypoints[j][1] * HEIGHT * Y_compress)
-                    #xy_dat.append((x,y))
                     xy_dat[j] = (x, y) #add xy data to dictionary
-                    print("Circles on joints")
-                    cv2.circle(src, (x, y), 3, color, 2)
-                    cv2.putText(src , "%d" % int(keypoints[j][0]), (x + 5, y),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1)
-                    cv2.circle(src, (x, y), 3, color, 2)
+                    if j in [7, 8]:
+                        print("Circles on joints")
+                        cv2.circle(src, (x, y), 3, color, 2)
             
             #see if data collected
             for point in self.joints:
@@ -218,7 +212,6 @@ class ShoulderPress():
                 lshoulder_xy = xy_dat[5]
                 lelbow_xy = xy_dat[7]
                 lwrist_xy = xy_dat[9]
-                #arm_length = distance_between_points(lshoulder_xy,lelbow_xy) + distance_between_points(lelbow_xy, lwrist_xy)
                 arm_length = distance_between_points(lshoulder_xy,lelbow_xy) 
                 self.arms[self.counter % len(self.arms)] = arm_length
                 self.counter += 1
@@ -229,8 +222,6 @@ class ShoulderPress():
                 #create plane some % of arm length above neck and some lower plane
                 # y values start at 0 in left corner -- grow larger as you move *DOWN*
                 top_threshold = neck_xy[1] - (.5 * arm_length)
-                cv2.circle(img=src, center=(neck_xy[0], int(top_threshold)), radius=8, color=(255, 0, 255), thickness=2)
-                #bottom_threshold = neck_xy[1] - (.15 * arm_length) -- TEMP -- wrist
                 # Bottom threshold for elbow is just neck
                 bottom_threshold = neck_xy[1] 
                 #check to see if both wrists are above plane
@@ -246,11 +237,8 @@ class ShoulderPress():
                         self.rep_stack.append("red")
                     for point in self.joints:
                         print("Painting red")
-                        cv2.circle(img=src, 
-                                center=xy_dat[point], 
-                                radius=3, 
-                                color=(0, 0, 255), 
-                                thickness=2)
+                        if point in [7, 8]:  # Only draw elbows
+                            cv2.circle(img=src, center=xy_dat[point], radius=3, color=(0, 0, 255), thickness=2)
 
                 # Blue -- (bottom of your range of motion)
                 elif xy_dat[7][1] > bottom_threshold and xy_dat[8][1] > bottom_threshold:
@@ -261,12 +249,18 @@ class ShoulderPress():
                         self.rep_count += 1
                         self.rep_stack = []
                     for point in self.joints:
-                        cv2.circle(img=src, 
-                                center=xy_dat[point], 
-                                radius=3, 
-                                color=(255, 0, 0), 
-                                thickness=2)
+                        if point in [7,8]:  # Only draw elbows
+                            cv2.circle(img=src, center=xy_dat[point], radius=3, color=(255, 0, 0), thickness=2)
         
+                if not self.rep_stack or self.rep_stack[-1] == "blue":
+                    #two lines with a break for your head
+                    cv2.line(src, (128, int(top_threshold)), (neck_xy[0] - 32, int(top_threshold)), color=(66, 174, 255), thickness=2)
+               
+                    cv2.line(src, (neck_xy[0] + 32, int(top_threshold)), (512, int(top_threshold)), color=(66, 174, 255), thickness=2)
+                else:
+                    cv2.line(src, (128, int(bottom_threshold)), (neck_xy[0] - 32, int(bottom_threshold)), color=(255, 0, 255), thickness=2)
+                    cv2.line(src, (neck_xy[0] + 32, int(bottom_threshold)), (512, int(bottom_threshold)), color=(255, 0, 255), thickness=2)
+
         cv2.putText(src , "FPS: %f" % (fps), (20, 20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
         cv2.putText(src , "Rep: %d" % (self.rep_count), (40, 40),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
                 #invert
@@ -274,8 +268,7 @@ class ShoulderPress():
 
 class Squat():
     def __init__(self):
-        self.joints = [11,13,15]  #LH, RH, LK, RK, LA, RA
-        self.angles = [150,90,15]
+        self.joints = [11,13]  #LH, LK
         self.rep_count = 0
         self.rep_stack = []
         self.thighs = [0] * 30
@@ -307,9 +300,8 @@ class Squat():
                     #xy_dat.append((x,y))
                     xy_dat[j] = (x, y) #add xy data to dictionary
                     print("Circles on joints")
-                    cv2.circle(src, (x, y), 3, color, 2)
-                    cv2.putText(src , "%d" % int(keypoints[j][0]), (x + 5, y),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1)
-                    cv2.circle(src, (x, y), 3, color, 2)
+                    if j == 11:  # Only draw the hip joint
+                        cv2.circle(src, (x, y), 3, color, 2)
             
             #see if data collected
             for point in self.joints:
@@ -322,7 +314,6 @@ class Squat():
                 #find length of left thigh
                 lhip_xy = xy_dat[11]
                 lknee_xy = xy_dat[13]
-                lankle_xy = xy_dat[15]
                 
                 thigh_length = distance_between_points(lknee_xy,lhip_xy) 
                 self.thighs[self.counter % len(self.thighs)] = thigh_length
@@ -336,13 +327,11 @@ class Squat():
                 top_threshold = int(lknee_xy[1] - (.75 * thigh_length))
                 #TODO: switch statement for bottom and top for reps
                 print("$$$$ Top:", top_threshold)
-                cv2.line(src, (64, top_threshold), (576, top_threshold), (255, 0, 255), 2)
                 #cv2.circle(img=src, center=(lhip_xy[0], int(top_threshold)), radius=8, color=(255, 0, 255), thickness=2)
                 
                 # Bottom threshold for elbow is just the knee
                 bottom_threshold = int(lknee_xy[1] - (.25 * thigh_length))
                 print("$$$$ Bottom:", bottom_threshold)
-                cv2.line(src, (64, bottom_threshold), (576, bottom_threshold), (255, 0, 255), 2)
                 #cv2.circle(img=src, center=(lhip_xy[0], int(bottom_threshold)), radius=8, color=(255, 0, 255), thickness=2)
                 #check to see if both wrists are above plane
 
@@ -357,11 +346,8 @@ class Squat():
                         self.rep_stack = []
                     for point in self.joints:
                         print("Painting red")
-                        cv2.circle(img=src, 
-                                center=xy_dat[point], 
-                                radius=3, 
-                                color=(0, 0, 255), 
-                                thickness=2)
+                        if point == 11:  # Only draw knee joint
+                            cv2.circle(img=src, center=xy_dat[point], radius=3, color=(0, 0, 255), thickness=2)
 
                 # Blue -- (bottom of your range of motion)
                 elif xy_dat[11][1] > bottom_threshold:
@@ -371,11 +357,14 @@ class Squat():
                     elif self.rep_stack[-1] == "red":
                         self.rep_stack.append("blue")
                     for point in self.joints:
-                        cv2.circle(img=src, 
-                                center=xy_dat[point], 
-                                radius=3, 
-                                color=(255, 0, 0), 
-                                thickness=2)
+                        if point == 11:  # Only draw knee joint
+                            cv2.circle(img=src, center=xy_dat[point], radius=3, color=(255, 0, 0), thickness=2)
+
+                if not self.rep_stack or self.rep_stack[-1] == "blue":
+                    cv2.line(src, (64, top_threshold), (576, top_threshold), (66, 174, 255), 2)
+                else:
+                    cv2.line(src, (64, bottom_threshold), (576, bottom_threshold), (255, 0, 255), 2)
+                    
         
         cv2.putText(src , "FPS: %f" % (fps), (20, 20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
         cv2.putText(src , "Rep: %d" % (self.rep_count), (40, 40),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
