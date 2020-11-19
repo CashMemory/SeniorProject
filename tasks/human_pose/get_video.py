@@ -28,6 +28,8 @@ from exercise import LeftBicepCurl, RightBicepCurl, ShoulderPress, Squat
 from flask import Flask, Response, render_template
 from flask_restful import Api, Resource
 
+import PySimpleGUI as sg
+
 executing = False       #global flag for session start
 exercise = None         #global exercise object required for model inference and drawing
 stopExercise = False    #global flag for stopping exercise after loop ends
@@ -80,6 +82,43 @@ class EndExerciseAPI(Resource):
 class StartSessionAPI(Resource):
     def get(self):
         return {'startSession':f'{id}'}
+
+
+# ------ Begin GUI layout ------
+
+video_viewer_column = [
+
+    [sg.Text("Flab2Ab:")],
+
+    [sg.Text(size=(40, 1), key="-TOUT-")],
+    #image will be flab2ab image
+    [sg.Image(key="-IMAGE-")],
+]
+
+repcount_list_column = [
+    [
+       #current rep count
+        sg.Text("Rep Count"),
+        #change folder to pull actual rep count
+        sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
+    ],
+    [
+        #previous exercise list
+        sg.Listbox(
+            values=[], enable_events=True, size=(40, 20), key="-FILE LIST-"
+        )
+    ],
+]
+
+#finally builds layout of gui
+layout = [
+    [
+        sg.Column(video_viewer_column),
+        sg.VSeperator(),
+        sg.Column(repcount_list_column),
+    ]
+]
+# ------ End GUI layout ------
 
 def main():
 
@@ -157,6 +196,10 @@ def main():
     global exercise, stopExercise, drawn
 
     while True:
+        window = sg.Window("OpenCV Integration", layout, location=(800, 400))
+
+        
+        
         while camera.cap.isOpened() and exercise:
             t = time.time()
             succeeded, image = camera.cap.read()
@@ -176,6 +219,7 @@ def main():
             drawn = exercise.draw(image, counts, objects, peaks, t)
             #drawn = draw(image, counts, objects, peaks, t)
             camera.frame = drawn
+            window["-IMAGE-"].update(data=drawn)
 
 
             if camera.out:
