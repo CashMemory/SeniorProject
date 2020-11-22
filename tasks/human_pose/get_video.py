@@ -2,10 +2,7 @@ import argparse
 import json
 import os.path
 import time
-
-
 import threading
-
 
 import cv2
 import PIL.Image
@@ -18,7 +15,6 @@ import trt_pose.coco
 import trt_pose.models
 from trt_pose.parse_objects import ParseObjects
 from trt_pose.draw_objects import DrawObjects 
-
 
 from camera import Camera
 from helper import draw, preprocess, WIDTH, HEIGHT
@@ -83,6 +79,9 @@ class StartSessionAPI(Resource):
     def get(self):
         return {'startSession':f'{id}'}
 
+class DebugAPI(Resource):
+    def get(self):
+        return {'debug':f'{id}'}
 
 # ------ Begin GUI layout ------
 
@@ -172,8 +171,6 @@ def main():
 
             yield(b'--frame\r\n' + b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded) +b'\r\n')
 
-    
-
     #add endpoints
     api.add_resource(LeftCurlAPI, '/leftCurl')
     api.add_resource(RightCurlAPI, '/rightCurl')
@@ -182,6 +179,7 @@ def main():
     api.add_resource(RepCountAPI, '/repCount')
     api.add_resource(EndExerciseAPI, '/endExercise')
     api.add_resource(StartSessionAPI, '/startSession')
+    api.add_resource(DebugAPI, '/debug')
     
     t = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0"})  # threaded=True)
     t.start()
@@ -198,8 +196,6 @@ def main():
     while True:
         window = sg.Window("OpenCV Integration", layout, location=(800, 400))
 
-        
-        
         while camera.cap.isOpened() and exercise:
             t = time.time()
             succeeded, image = camera.cap.read()
@@ -237,9 +233,6 @@ def main():
     cv2.destroyAllWindows()
     camera.out.release()
     camera.cap.release()
-
-
-
 
 if __name__ == "__main__":
     main()
