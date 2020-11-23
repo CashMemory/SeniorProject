@@ -2,10 +2,7 @@ import argparse
 import json
 import os.path
 import time
-
-
 import threading
-
 
 import cv2
 import PIL.Image
@@ -18,7 +15,6 @@ import trt_pose.coco
 import trt_pose.models
 from trt_pose.parse_objects import ParseObjects
 from trt_pose.draw_objects import DrawObjects 
-
 
 from camera import Camera
 from helper import draw, preprocess, WIDTH, HEIGHT
@@ -83,6 +79,9 @@ class StartSessionAPI(Resource):
     def get(self):
         return {'startSession':f'{id}'}
 
+class DebugAPI(Resource):
+    def get(self):
+        return {'debug':f'{id}'}
 
 # ------ Begin GUI layout ------
 
@@ -92,7 +91,7 @@ video_viewer_column = [
 
     [sg.Text(size=(40, 1), key="-TOUT-")],
     #image will be flab2ab image
-    [sg.Image(key="-IMAGE-")],
+    [sg.Image(filename="", key="image")],
 ]
 
 repcount_list_column = [
@@ -172,8 +171,6 @@ def main():
 
             yield(b'--frame\r\n' + b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded) +b'\r\n')
 
-    
-
     #add endpoints
     api.add_resource(LeftCurlAPI, '/leftCurl')
     api.add_resource(RightCurlAPI, '/rightCurl')
@@ -182,6 +179,7 @@ def main():
     api.add_resource(RepCountAPI, '/repCount')
     api.add_resource(EndExerciseAPI, '/endExercise')
     api.add_resource(StartSessionAPI, '/startSession')
+    api.add_resource(DebugAPI, '/debug')
     
     t = threading.Thread(target=app.run, kwargs={"host": "0.0.0.0"})  # threaded=True)
     t.start()
@@ -195,14 +193,23 @@ def main():
 
     global exercise, stopExercise, drawn
 
-    while True:
-        window = sg.Window("OpenCV Integration", layout, location=(800, 400))
+    window = sg.Window("Flab2Ab", layout, location=(800, 400), finalize=True)
 
+    while True:
         
-        
+        #Gui Stuff
+
+        #event, values = window.read(timeout=20)
+
+        #if event == 'Exit' or event == sg.WIN_CLOSED:
+            #break;
+
+
         while camera.cap.isOpened() and exercise:
             t = time.time()
             succeeded, image = camera.cap.read()
+
+            
             print("Frame captured")
             if not succeeded:
                 print("Camera read Error")
@@ -216,16 +223,21 @@ def main():
                 data=preprocessed, parser=parse_objects
             )
             
+            
             drawn = exercise.draw(image, counts, objects, peaks, t)
+           
+            encoded_img= cv2.imencode('.jpg', drawn)[1].tobytes()
+
+            
             #drawn = draw(image, counts, objects, peaks, t)
             camera.frame = drawn
-            window["-IMAGE-"].update(data=drawn)
+            window["image"].update(data=encoded_img)
 
 
             if camera.out:
                 camera.out.write(drawn)
-            cv2.imshow('flab2ab',drawn)
-            cv2.waitKey(1)
+            #cv2.imshow('flab2ab',drawn)
+            #cv2.waitKey(1)
                    
             if stopExercise:
                 exercise = None
@@ -237,9 +249,6 @@ def main():
     cv2.destroyAllWindows()
     camera.out.release()
     camera.cap.release()
-
-
-
 
 if __name__ == "__main__":
     main()
