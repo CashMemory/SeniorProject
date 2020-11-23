@@ -29,13 +29,14 @@ Function = namedtuple('Function', ['name', 'args'])
         
 class LeftBicepCurl():
     def __init__(self):
-        self.joints = [5,7,9,11] #left shoulder, left elbow, left wrist, left hip
+        self.joints = [5,7,9] #left shoulder, left elbow, left wrist (11 = left hip)
         self.angles = [150,90,15]
         self.rep_count = 0
         self.rep_stack = []
         self.rotations = [1] * 30
         self.arms = [0] * 30
         self.counter = 0
+        self.last_known = None
      
     def get_arm_length(self):
         # Check for a complete sampling of arm lengths
@@ -64,7 +65,7 @@ class LeftBicepCurl():
                 if keypoints[j][1]:
                     x = round(keypoints[j][2] * WIDTH * X_compress)
                     y = round(keypoints[j][1] * HEIGHT * Y_compress)
-                    xy_dat[j] = (x,y)
+                    xy_dat[j] = (int(x),int(y))
                     if j == 9:
                         cv2.circle(src, (x, y), 3, GREEN, 2)
 
@@ -73,14 +74,6 @@ class LeftBicepCurl():
             if has_data:
                 #angle calculations
                 wrist_angle = angle_between_points(xy_dat[5], xy_dat[7], xy_dat[9]) #angle between lshoulder, lelbow, lwrist
-                
-                #rotation sampling
-                rotation = -1 * angle_between_points(xy_dat[11], xy_dat[7], xy_dat[9]) #angle between rhip, rshoulder, relbow
-                self.rotations[self.counter % len(self.rotations)] = rotation
-                rotation = self.get_rotation()
-                if rotation == 1:
-                    continue
-
                 #forearm sampling
                 forearm_length = distance_between_points(xy_dat[7], xy_dat[9])
                 self.arms[self.counter % len(self.arms)] = forearm_length
@@ -90,10 +83,10 @@ class LeftBicepCurl():
                     continue  
                               
                 bottom_angle = 120
-                top_angle = 40     
+                top_angle = 50     
                                 
                 if wrist_angle < top_angle:
-                    if self.rep_stack[-1] == "blue": 
+                    if self.rep_stack and self.rep_stack[-1] == "blue": 
                         self.rep_stack.append("red")
 
                 # Blue
@@ -104,9 +97,10 @@ class LeftBicepCurl():
                         self.rep_count += 1
                         self.rep_stack = []
 
+                rotation = 90  # TEMP
                 # Save positions of arcs for drawing
-                self.last_known = (Function(cv2.ellipse, [xy_dat[7], (forearm_length, int(.8 * forearm_length)), rotation, wrist_angle+5,bottom_angle, BLUE, 2]), 
-                                   Function(cv2.ellipse, [xy_dat[7], (forearm_length, int(.8 * forearm_length)), rotation, top_angle, wrist_angle-5, 165, RED, 2]))
+                self.last_known = (Function(cv2.ellipse, [xy_dat[7], (forearm_length, int(.8 * forearm_length)), rotation, wrist_angle, 150, BLUE, 4]), 
+                                   Function(cv2.ellipse, [xy_dat[7], (forearm_length, int(.8 * forearm_length)), rotation, 30, wrist_angle, RED, 4]))
                                    
             # Draw the arcs
             if self.last_known:
@@ -117,7 +111,7 @@ class LeftBicepCurl():
 
 class RightBicepCurl():
     def __init__(self):
-        self.joints = [6,8,10,12]  #Right Shoulder, Right Elbow, Right Wrist, right hip
+        self.joints = [6,8,10]  #Right Shoulder, Right Elbow, Right Wrist, (right hip = 12)
         self.angles = [150,90,15]
         self.rep_count = 0
         self.rep_stack = []
@@ -156,7 +150,7 @@ class RightBicepCurl():
                 if keypoints[j][1]:
                     x = round(keypoints[j][2] * WIDTH * X_compress)
                     y = round(keypoints[j][1] * HEIGHT * Y_compress)
-                    xy_dat[j] = (x,y)
+                    xy_dat[j] = (int(x), int(y))
                     if j == 10:
                         cv2.circle(src, (x, y), 3, GREEN, 2)
 
@@ -169,14 +163,6 @@ class RightBicepCurl():
 
                 #angle calculations
                 wrist_angle = angle_between_points(xy_dat[6], xy_dat[8], xy_dat[10]) #angle between rshoulder, relbow, rwrist
-                
-                #rotation sampling
-                rotation = angle_between_points(xy_dat[12], xy_dat[6], xy_dat[8]) #angle between rhip, rshoulder, relbow
-                self.rotations[self.counter % len(self.rotations)] = rotation
-                rotation = self.get_rotation()
-                if rotation == -1:
-                    continue
-
                 #forearm sampling
                 forearm_length = distance_between_points(xy_dat[6], xy_dat[8])
                 self.arms[self.counter % len(self.arms)] = forearm_length
@@ -185,14 +171,12 @@ class RightBicepCurl():
                 if forearm_length == 0:
                     continue                
                 bottom_angle = 120
-                top_angle = 40        
+                top_angle = 50        
 
                 # Red
                 if wrist_angle < top_angle:
-                    if self.rep_stack[-1] == "blue": 
+                    if self.rep_stack and self.rep_stack[-1] == "blue": 
                         self.rep_stack.append("red")
-                    #for data_point in xy_dat:
-                        #cv2.circle(img=src,center=data_point, radius=3, color=(255, 0, 0), thickness=2)
                         
                 # Blue
                 elif wrist_angle > bottom_angle:
@@ -201,16 +185,17 @@ class RightBicepCurl():
                     elif self.rep_stack[-1] == "red":
                         self.rep_count += 1
                         self.rep_stack = []
-                    #for data_point in xy_dat:
-                        #cv2.circle(img=src,center=data_point,radius=3,color=(0, 0, 255),thickness=2)
+
+                rotation = -90
 
                 # Save positions of arcs for drawing
-                self.last_known = (Function(cv2.ellipse, [xy_dat[8], (forearm_length, int(.8 * forearm_length)), rotation, wrist_angle+5,bottom_angle, BLUE, 2]), 
-                                   Function(cv2.ellipse, [xy_dat[8], (forearm_length, int(.8 * forearm_length)), rotation, top_angle, wrist_angle-5, 165, RED, 2]))
+                self.last_known = (Function(cv2.ellipse, [xy_dat[8], (forearm_length, int(.8 * forearm_length)), rotation, wrist_angle, 150, BLUE, 4]), 
+                                   Function(cv2.ellipse, [xy_dat[8], (forearm_length, int(.8 * forearm_length)), rotation, 30, wrist_angle, RED, 4]))
                                    
             # Draw the arcs
             if self.last_known:
                 for func in self.last_known:
+                    print(func.args)
                     func.name(src, *func.args)
             
 
@@ -286,13 +271,8 @@ class ShoulderPress():
                     print("!!!!! Red !!!!!")
                     if len(self.rep_stack) == 0:
                         continue
-                        #self.rep_stack.append("blue")
                     if self.rep_stack[-1] == "blue":
                         self.rep_stack.append("red")
-                    # for point in self.joints:
-                    #     print("Painting red")
-                    #     if point in [7, 8]:  # Only draw elbows
-                    #         cv2.circle(img=src, center=xy_dat[point], radius=3, color=(0, 0, 255), thickness=2)
 
                 # Blue -- (bottom of your range of motion)
                 elif xy_dat[7][1] > bottom_threshold and xy_dat[8][1] > bottom_threshold:
@@ -302,22 +282,15 @@ class ShoulderPress():
                     elif self.rep_stack[-1] == "red":
                         self.rep_count += 1
                         self.rep_stack = []
-                    #for point in self.joints:
-                        #if point in [7,8]:  # Only draw elbows
-                            #cv2.circle(img=src, center=xy_dat[point], radius=3, color=(255, 0, 0), thickness=2)
         
                 if not self.rep_stack or self.rep_stack[-1] == "blue":
                     # Two lines with a break for your head
                     # Save last known lines for drawing
-                    self.last_known = (Function(cv2.line, [(128, top_threshold), (neck_xy[0] - 32, bottom_threshold), RED, 2]), 
-                                        Function(cv2.line, [(neck_xy[0] + 32, top_threshold), (512, top_threshold), RED, 2]))
-                    #self.last_known = (cv2.line(src, (128, int(top_threshold)), (neck_xy[0] - 32, int(top_threshold)), color=RED, thickness=2),
-                    #                   cv2.line(src, (neck_xy[0] + 32, int(top_threshold)), (512, int(top_threshold)), color=RED, thickness=2))
+                    self.last_known = (Function(cv2.line, [(int(xy_dat[9][0])-32, top_threshold), (int(xy_dat[9][0]) + 32, top_threshold), RED, 2]), 
+                                        Function(cv2.line, [(int(xy_dat[10][0]) - 32, top_threshold), (int(xy_dat[10][0])+32, top_threshold), RED, 2]))
                 else:
-                    self.last_known = (Function(cv2.line, [(128, bottom_threshold), (neck_xy[0] - 32, bottom_threshold), BLUE, 2]), 
-                                       Function(cv2.line, [(neck_xy[0] + 32, bottom_threshold), (512, bottom_threshold), BLUE, 2]))
-                    # self.last_known = (cv2.line(src, (128, int(bottom_threshold)), (neck_xy[0] - 32, int(bottom_threshold)), color=BLUE, thickness=2),
-                    #                    cv2.line(src, (neck_xy[0] + 32, int(bottom_threshold)), (512, int(bottom_threshold)), color=BLUE, thickness=2))
+                    self.last_known = (Function(cv2.line, [(int(xy_dat[9][0])-32, bottom_threshold), (int(xy_dat[9][0]) + 32, bottom_threshold), BLUE, 2]), 
+                                       Function(cv2.line, [(int(xy_dat[10][0]) - 32, bottom_threshold), (int(xy_dat[10][0])+32, bottom_threshold), BLUE, 2]))
             
             if self.last_known:
                 # Draw our last known planes (Helpful when we have incomplete data)
@@ -429,7 +402,7 @@ class Squat():
             # Draw our last known plane
             if self.last_known:
                 # FIXME -- Could be syntax issues here. Also, are we drawing on an old frame (src) ? 
-                self.last_known.name(src, self.last_known.args)
+                self.last_known.name(src, *self.last_known.args)
         
         #cv2.putText(src , "FPS: %f" % (fps), (20, 20),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
         #cv2.putText(src , "Rep: %d" % (self.rep_count), (40, 40),  cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
@@ -439,9 +412,23 @@ class Squat():
 class Debug():
     def __init__(self):
         self.joints = list(range(18))
-        self.skeleton = [[16, 14], [14, 12], [17, 15], [15, 13], [12, 13], [6, 8], [7, 9], [8, 10], [9, 11], 
-                        [2, 3], [1, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7], [18, 1], [18, 6], [18, 7], 
-                        [18, 12], [18, 13]]
+        self.skeleton = [[16, 14],  # Right ankle -> Right knee
+                         [14, 12],  # Right knee -> Right hip
+                         [15, 13],  # Left ankle -> Left knee
+                         [13, 11],  # Left knee -> Left hip
+                         [6, 8],    # Right elbow -> Right shoulder
+                         [8, 10],   # Right elbow -> Right wrist
+                         [7, 9],    # Left elbow -> Left wrist
+                         [5, 7],    # Left shoulder -> Left elbow
+                         [1, 3],    # Left eye -> Left ear
+                         [1, 0],    # Left eye -> nose
+                         [2, 4],    # Right eye -> Right ear
+                         [2, 0],    # Right eye -> nose
+                         [17, 0],   # Neck -> Nose
+                         [17, 5],   # Neck -> Left shoulder
+                         [17, 6],   # Neck -> Right shoulder
+                         [17, 12],  # Neck -> Right hip
+                         [17, 11]]  # Neck -> Left hip
 
     def draw(self, src, counts, objects, peaks, t):
         print("!!!!! DEBUG !!!!!")
@@ -462,17 +449,16 @@ class Debug():
                     print("Circles on joints")
                     cv2.circle(src, (x, y), 3, GREEN, 2)
                     cv2.putText(src, f"{j}", (x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, GREEN, 1) 
-            
 
             #iterate over the skeleton, which is list of of pairs of connections [lw, le], [le, ls], ls, neck]
-            for joint in self.skeleton:
-                a = xy_dat[joint[0]]
-                b = xy_dat[joint[1]]
-                cv2.line(src, a, b, BLUE, 1)
-                
+            #for joint in self.skeleton:
+                #a = xy_dat.get(joint[0])
+                #b = xy_dat.get(joint[1])
+                #if a and b:
+                    #cv2.line(src, a, b, BLUE, 1)
 
-        cv2.putText(src , "FPS: %f" % (fps), (20, 20),  cv2.FONT_HERSHEY_SIMPLEX, 1, GREEN, 1)
-
+        cv2.putText(src , "FPS: %f" % (fps), (20, 20),  cv2.FONT_HERSHEY_SIMPLEX, 1, RED, 2)
+        return src
 
 # From NVIDIA ... remove this if the above function works for debug mode
     # def __call__(self, image, object_counts, objects, normalized_peaks):
