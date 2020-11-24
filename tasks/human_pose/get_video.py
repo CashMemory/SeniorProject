@@ -86,10 +86,6 @@ class DebugAPI(Resource):
 # ------ Begin GUI layout ------
 
 video_viewer_column = [
-
-    [sg.Text("Flab2Ab:")],
-
-    [sg.Text(size=(40, 1), key="-TOUT-")],
     #image will be flab2ab image
     [sg.Image(filename="", key="image")],
 ]
@@ -99,12 +95,12 @@ repcount_list_column = [
        #current rep count
         sg.Text("Rep Count"),
         #change folder to pull actual rep count
-        sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
+        sg.In(size=(25, 1), enable_events=True, key="repCount"),
     ],
     [
         #previous exercise list
         sg.Listbox(
-            values=[], enable_events=True, size=(40, 20), key="-FILE LIST-"
+            values=[], enable_events=True, size=(40, 20), key="exerciseList"
         )
     ],
 ]
@@ -117,6 +113,34 @@ layout = [
         sg.Column(repcount_list_column),
     ]
 ]
+
+# def MediaPlayerGUI(cv):
+#     background = '#27D796'
+#     elements = '#21BFC2'
+#     sg.set_options(background_color = background,element_background_color = elements)
+
+#     layout =[
+#                 [sg.Text('Flab2Ab', size=(40, 1), justification='center', font='Helvetica 20')],
+#                 [sg.Image(filename='', key='image')],
+#             ]
+
+#     window = sg.Window('Flab2Ab',location=(800,400))
+
+#     layout = [video_viewer_column]
+
+#     window = sg.Window("Flab2Ab",layout,default_element_size=(20,1),font=("Helcetica",25))
+
+    
+#     while True:
+#         event, values = window.ReadNonBlocking()
+
+#         ret, frame = cap.read()
+
+#         bio = io.Bytres() # binary memory resident stream
+#         img.save(bio, format= 'PNG')  # save image as png to it
+#         imgbytes = bio.getvalue()  # this can be used by OpenCV hopefully
+#         window.FindElement('image').Update(data=imgbytes)
+
 # ------ End GUI layout ------
 
 def main():
@@ -193,7 +217,9 @@ def main():
 
     global exercise, stopExercise, drawn
 
-    window = sg.Window("Flab2Ab", layout, location=(800, 400), finalize=True)
+    window = sg.Window("Flab2Ab", location=(800, 400))
+
+    window.Layout(layout).Finalize()
 
     while True:
         
@@ -225,19 +251,18 @@ def main():
             
             
             drawn = exercise.draw(image, counts, objects, peaks, t)
-           
-            encoded_img= cv2.imencode('.jpg', drawn)[1].tobytes()
-
-            
             #drawn = draw(image, counts, objects, peaks, t)
-            camera.frame = drawn
-            window["image"].update(data=encoded_img)
+           # camera.frame = drawn
+
+            encoded_img= cv2.imencode('.png', image)[1].tobytes()
+            window.FindElement("image").update(data=encoded_img)
 
 
             if camera.out:
                 camera.out.write(drawn)
+
             #cv2.imshow('flab2ab',drawn)
-            #cv2.waitKey(1)
+            cv2.waitKey(1)
                    
             if stopExercise:
                 exercise = None
