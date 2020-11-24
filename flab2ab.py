@@ -1,7 +1,8 @@
 #must import image !!!
 
 from PyQt5 import QtCore, QtWidgets,QtGui
-from QtGui import QImage,QPixmap
+import cv2
+
 
    
 
@@ -17,8 +18,11 @@ class Ui_MainWindow(object):
                 item = workouts[x]
                 self.workout_list.addItem(item)
 
-                
-        cap = cv2
+        
+
+       #don't need video capture, just when new frames passed in (every update)  
+        
+        cap = cv2.VideoCapture('')
         while(cap.isOpened()):
                 ret, frame = cap.read()
                 if not ret:
@@ -35,7 +39,7 @@ class Ui_MainWindow(object):
                         break
         cap.release()
 
-
+        
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
