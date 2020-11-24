@@ -3,9 +3,11 @@
 # display the camera feed with grayscale using OpenCV
 
 import time
-import cv2
+from cv2 import cv2
 import PySimpleGUI as sg
 
+
+workout_list = ['workout1','workout2','workout3']
 # Camera Settings
 camera_Width  = 320 # 480 # 640 # 1024 # 1280
 camera_Heigth = 240 # 320 # 480 # 780  # 960
@@ -14,22 +16,24 @@ video_capture = cv2.VideoCapture(0)
 time.sleep(2.0)
 
 # init Windows Manager
-sg.theme("DarkBlue")
+background = '#232530'
+elements = '#27D796'
+sg.set_options(background_color = background,element_background_color = elements)
 
 # def webcam col
-colwebcam1_layout = [[sg.Text("Camera View", size=(60, 1), justification="center")],
+colwebcam1_layout = [[sg.Text("Camera View", size=(100, 1), justification="center")],
                         [sg.Image(filename="", key="cam1")]]
 colwebcam1 = sg.Column(colwebcam1_layout, element_justification='center')
 
-colwebcam2_layout = [[sg.Text("Camera View GrayScale", size=(60, 1), justification="center")],
-                        [sg.Image(filename="", key="cam1gray")]]
-colwebcam2 = sg.Column(colwebcam2_layout, element_justification='center')
-colslayout = [colwebcam1, colwebcam2]
+WorkoutList = [[sg.Text("Workout List", size=(60, 1), justification="center")],
+                        [sg.Listbox(workout_list, key="workoutlist")]]
+worklist = sg.Column(WorkoutList, element_justification='center')
+colslayout = [colwebcam1, worklist]
 
 rowfooter = [sg.Image(filename="", key="-IMAGEBOTTOM-")]
 layout = [colslayout, rowfooter]
 
-window    = sg.Window("El Bruno – Webcams and GrayScale with PySimpleGUI", layout, 
+window    = sg.Window("FLAB2AB", layout, 
                     no_titlebar=False, alpha_channel=1, grab_anywhere=False, 
                     return_keyboard_events=True, location=(100, 100))        
 while True:
@@ -56,8 +60,9 @@ while True:
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # # update webcam2
-    imgbytes = cv2.imencode(".png", gray)[1].tobytes()
-    window["cam1gray"].update(data=imgbytes)
+    search = values['workoutlist']
+    new_values = [x for x in workout_list if search in x]
+    window.Element('workoutlist').update(new_values)
 
 video_capture.release()
 cv2.destroyAllWindows()
