@@ -87,26 +87,29 @@ class DebugAPI(Resource):
 workout_list = ['workout1','workout2','workout3']
 
 background = '#27D796'
-#elements = '#232530'
+element_bg = '#232530'
 elements = '#1A1C23'
 
 
-sg.set_options(background_color = background,element_background_color = elements,text_color = elements )
+sg.set_options(background_color = background, text_color = elements )
 
 # def webcam col
-colwebcam1_layout = [   [sg.Text("Camera Feed")],
-                        [sg.Image(filename="", key="cameraFeed")]]
+colwebcam1_layout = [   [sg.Image(filename="logo.png")],
+                        [sg.Text("Camera Feed", background_color = background)],
+                        [sg.Image(filename="", key="cameraFeed")]
+]
+
 colwebcam1 = sg.Column(colwebcam1_layout, element_justification='center')
 
 
-WorkoutList = [         [sg.Text("Rep Count", size=(60, 1), justification="center")],
-                        [sg.Text("1", size=(60, 1), justification="center",key="repcount")],
-                        [sg.Text("Workout List", size=(60, 1), justification="center")],
+WorkoutList = [         [sg.Text("Rep Count", size=(60, 1), justification="center", background_color = background)],
+                        [sg.Text("1", size=(60, 1), justification="center",key="repcount", background_color = background)],
+                        [sg.Text("Workout List", size=(60, 1), justification="center", background_color = background)],
                         [sg.Listbox(values=[],size=(60,30),enable_events=True, key="workoutlist")]
 ]
 
-
 worklist = sg.Column(WorkoutList, element_justification='center')
+
 layout = [
     [colwebcam1,sg.VSeperator(),worklist]
 ]
@@ -115,41 +118,8 @@ layout = [
 window    = sg.Window("FLAB2AB", layout, 
                     no_titlebar=False, alpha_channel=1, grab_anywhere=False, 
                     return_keyboard_events=False, location=(100, 100), finalize=True)        
-'''
-video_viewer_column = [
-    #image will be flab2ab image
-    [sg.Text("Camera Feed")],
-    [sg.Image(filename="", size=(640,480), key="cameraFeed")]
-]
 
 
-
-repcount_list_column = [
-    [
-       #current rep count
-        sg.Text("Rep Count"),
-        #change folder to pull actual rep count
-        sg.In(size=(25, 1), enable_events=True, key="repCount"),
-    ],
-    [
-        #previous exercise list
-        sg.Listbox(
-            values=[], enable_events=True, size=(40, 20), key="exerciseList"
-        )
-    ],
-]
-
-'''
-
-#layout = [[sg.Image(filename='', key='cameraFeed')]]
-
-#sg.theme("LightGreen")
-
-#window = sg.Window('Demo Application - OpenCV Integration', layout, location=(800,400), finalize=True)
-
-
-# window = sg.Window("Flab2Ab", layout, grab_anywhere=False, size=(1024,1024),
-#                          return_keyboard_events=False, location=(850, 400), finalize=True)
 
 
 def main():
