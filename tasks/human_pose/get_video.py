@@ -84,11 +84,45 @@ class DebugAPI(Resource):
         return {'debug':f'{id}'}
 
 # ------ Begin GUI layout ------
+workout_list = ['workout1','workout2','workout3']
 
+background = '#27D796'
+#elements = '#232530'
+elements = '#1A1C23'
+
+
+sg.set_options(background_color = background,element_background_color = elements,text_color = elements )
+
+# def webcam col
+colwebcam1_layout = [   [sg.Text("Camera Feed")],
+                        [sg.Image(filename="", key="cameraFeed")]]
+colwebcam1 = sg.Column(colwebcam1_layout, element_justification='center')
+
+
+WorkoutList = [         [sg.Text("Rep Count", size=(60, 1), justification="center")],
+                        [sg.Text("1", size=(60, 1), justification="center",key="repcount")],
+                        [sg.Text("Workout List", size=(60, 1), justification="center")],
+                        [sg.Listbox(values=[],size=(60,30),enable_events=True, key="workoutlist")]
+]
+
+
+worklist = sg.Column(WorkoutList, element_justification='center')
+layout = [
+    [colwebcam1,sg.VSeperator(),worklist]
+]
+
+
+window    = sg.Window("FLAB2AB", layout, 
+                    no_titlebar=False, alpha_channel=1, grab_anywhere=False, 
+                    return_keyboard_events=False, location=(100, 100), finalize=True)        
+'''
 video_viewer_column = [
     #image will be flab2ab image
-    [sg.Image(filename="", key="image")],
+    [sg.Text("Camera Feed")],
+    [sg.Image(filename="", size=(640,480), key="cameraFeed")]
 ]
+
+
 
 repcount_list_column = [
     [
@@ -105,43 +139,18 @@ repcount_list_column = [
     ],
 ]
 
-#finally builds layout of gui
-layout = [
-    [
-        sg.Column(video_viewer_column),
-        sg.VSeperator(),
-        sg.Column(repcount_list_column),
-    ]
-]
+'''
 
-# def MediaPlayerGUI(cv):
-#     background = '#27D796'
-#     elements = '#21BFC2'
-#     sg.set_options(background_color = background,element_background_color = elements)
+#layout = [[sg.Image(filename='', key='cameraFeed')]]
 
-#     layout =[
-#                 [sg.Text('Flab2Ab', size=(40, 1), justification='center', font='Helvetica 20')],
-#                 [sg.Image(filename='', key='image')],
-#             ]
+#sg.theme("LightGreen")
 
-#     window = sg.Window('Flab2Ab',location=(800,400))
+#window = sg.Window('Demo Application - OpenCV Integration', layout, location=(800,400), finalize=True)
 
-#     layout = [video_viewer_column]
 
-#     window = sg.Window("Flab2Ab",layout,default_element_size=(20,1),font=("Helcetica",25))
+# window = sg.Window("Flab2Ab", layout, grab_anywhere=False, size=(1024,1024),
+#                          return_keyboard_events=False, location=(850, 400), finalize=True)
 
-    
-#     while True:
-#         event, values = window.ReadNonBlocking()
-
-#         ret, frame = cap.read()
-
-#         bio = io.Bytres() # binary memory resident stream
-#         img.save(bio, format= 'PNG')  # save image as png to it
-#         imgbytes = bio.getvalue()  # this can be used by OpenCV hopefully
-#         window.FindElement('image').Update(data=imgbytes)
-
-# ------ End GUI layout ------
 
 def main():
 
@@ -153,7 +162,7 @@ def main():
     # Create a topology tensor (intermediate DS that describes part linkages)
     topology = trt_pose.coco.coco_category_to_topology(human_pose)
     
-    # Construct and load the model
+    # # Construct and load the model
     model = Model(pose_annotations=human_pose)
     model.load_model("resnet")
     
@@ -172,28 +181,6 @@ def main():
 
     app = Flask(__name__)
     api = Api(app)
-
-    @app.route('/')
-    def index():
-        return render_template('index.html')
-
-    @app.route('/getFrame')
-    def getFrame():
-        return Response(gen(), mimetype="multipart/x-mixed-replace; boundary=frame")
-
-    def gen():
-        nonlocal camera
-        
-        while True:
-            if camera.frame is None:
-                continue
-
-            success, encoded = cv2.imencode(".jpg", camera.frame)
-            
-            if not success: 
-                continue
-
-            yield(b'--frame\r\n' + b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded) +b'\r\n')
 
     #add endpoints
     api.add_resource(LeftCurlAPI, '/leftCurl')
@@ -217,25 +204,21 @@ def main():
 
     global exercise, stopExercise, drawn
 
-    window = sg.Window("Flab2Ab", location=(800, 400))
-
-    window.Layout(layout).Finalize()
+   
 
     while True:
-        
-        #Gui Stuff
-
-        #event, values = window.read(timeout=20)
-
-        #if event == 'Exit' or event == sg.WIN_CLOSED:
-            #break;
-
 
         while camera.cap.isOpened() and exercise:
             t = time.time()
+
+            #Gui Stuff
+            event, values = window.read(timeout=1)
+
+            if event == 'Exit' or event == sg.WIN_CLOSED:
+                break;
+
             succeeded, image = camera.cap.read()
 
-            
             print("Frame captured")
             if not succeeded:
                 print("Camera read Error")
@@ -252,21 +235,25 @@ def main():
             
             drawn = exercise.draw(image, counts, objects, peaks, t)
             #drawn = draw(image, counts, objects, peaks, t)
-           # camera.frame = drawn
-
-            encoded_img= cv2.imencode('.png', image)[1].tobytes()
-            window.FindElement("image").update(data=encoded_img)
-
+            camera.frame = drawn
 
             if camera.out:
                 camera.out.write(drawn)
 
+            imgbytes = cv2.imencode(".png", drawn)[1].tobytes()
+            window["cameraFeed"].update(data=imgbytes)     
+
+            
             #cv2.imshow('flab2ab',drawn)
-            cv2.waitKey(1)
+            #cv2.waitKey(1)
                    
             if stopExercise:
                 exercise = None
                 stopExercise = False
+                search = values['workoutlist']
+                new_values = [x for x in workout_list if search in x]
+                window.Element('workoutlist').update(new_values)
+
                 print("exercise ended successfully")
 
     # Clean up resources
