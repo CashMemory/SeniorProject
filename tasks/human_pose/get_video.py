@@ -19,7 +19,7 @@ from trt_pose.draw_objects import DrawObjects
 from camera import Camera
 from helper import draw, preprocess, WIDTH, HEIGHT
 from model import Model
-from exercise import LeftBicepCurl, RightBicepCurl, ShoulderPress, Squat
+from exercise import LeftBicepCurl, RightBicepCurl, ShoulderPress, Squat, Debug
 
 from flask import Flask, Response, render_template
 from flask_restful import Api, Resource
@@ -81,6 +81,10 @@ class StartSessionAPI(Resource):
 
 class DebugAPI(Resource):
     def get(self):
+        global exercise
+        exercise = Debug()
+        global executing
+        executing = True
         return {'debug':f'{id}'}
 
 # ------ Begin GUI layout ------
