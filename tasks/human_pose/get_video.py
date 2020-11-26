@@ -100,7 +100,7 @@ sg.set_options(background_color = background, text_color = elements )
 
 # def webcam col
 colwebcam1_layout = [   
-    #[sg.Image(filename="logo.png")],
+    [sg.Image(filename="logo.png")],
     [sg.Text("Camera Feed", font=("Helvetica 12"), background_color = background)],
     [sg.Image(filename="", key="cameraFeed", background_color= background, size=(WIDTH * 2, HEIGHT * 2))]
 ]
@@ -237,15 +237,16 @@ def main():
                    
             if stopExercise:
                 
+
                 #lmao janky but helps with spacing
                 if exercise.name == "Right Curl":
-                    history = f"{exercise.name}              :{exercise.rep_count}"
+                    history = f"Right Curl         : {exercise.rep_count}"
                 elif exercise.name == "Left Curl":
-                    history = f"{exercise.name}               :{exercise.rep_count}"
+                    history = f"Left Curl          : {exercise.rep_count}"
                 elif exercise.name == "Squat":
-                    history = f"{exercise.name}                   :{exercise.rep_count}"
+                    history = f"Squat              : {exercise.rep_count}"
                 else:
-                    history = f"{exercise.name}          :{exercise.rep_count}"
+                    history = f"Shoulder Press     : {exercise.rep_count}"
 
                 final_list.append(history)
                 
