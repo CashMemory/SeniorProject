@@ -94,23 +94,28 @@ elements = '#1A1C23'
 sg.set_options(background_color = background, text_color = elements )
 
 # def webcam col
-colwebcam1_layout = [   [sg.Image(filename="logo.png")],
-                        [sg.Text("Camera Feed", background_color = background)],
-                        [sg.Image(filename="", key="cameraFeed")]
+colwebcam1_layout = 
+[   
+    #[sg.Image(filename=r"logo.png")],
+    [sg.Text("Camera Feed", background_color = background)],
+    [sg.Image(filename="", key="cameraFeed")]
 ]
 
 colwebcam1 = sg.Column(colwebcam1_layout, element_justification='center')
 
 
-WorkoutList = [         [sg.Text("Rep Count", size=(60, 1), justification="center", background_color = background)],
-                        [sg.Text("1", size=(60, 1), justification="center",key="repcount", background_color = background)],
-                        [sg.Text("Workout List", size=(60, 1), justification="center", background_color = background)],
-                        [sg.Listbox(values=[],size=(60,30),enable_events=True, key="workoutlist")]
+WorkoutList = 
+[         
+    [sg.Text("Rep Count", size=(60, 1), justification="center", background_color = background)],
+    [sg.Text("1", size=(60, 1), justification="center",key="repcount", background_color = background)],
+    [sg.Text("Workout List", size=(60, 1), justification="center", background_color = background)],
+    [sg.Listbox(values=[],size=(60,30),enable_events=True, key="workoutlist")]
 ]
 
 worklist = sg.Column(WorkoutList, element_justification='center')
 
-layout = [
+layout = 
+[
     [colwebcam1,sg.VSeperator(),worklist]
 ]
 
