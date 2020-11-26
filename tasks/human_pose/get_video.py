@@ -237,8 +237,16 @@ def main():
                    
             if stopExercise:
                 
+                #lmao janky but helps with spacing
+                if exercise.name == "Right Curl":
+                    history = f"{exercise.name}              :{exercise.rep_count}"
+                elif exercise.name == "Left Curl":
+                    history = f"{exercise.name}               :{exercise.rep_count}"
+                elif exercise.name == "Squat":
+                    history = f"{exercise.name}                   :{exercise.rep_count}"
+                else:
+                    history = f"{exercise.name}          :{exercise.rep_count}"
 
-                history = f"{exercise.name}: {exercise.rep_count}"
                 final_list.append(history)
                 
                 
