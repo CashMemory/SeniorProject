@@ -93,26 +93,28 @@ workout_list = {}
 
 background = '#27D796'
 element_bg = '#232530'
-elements = '#1A1C23'
+#elements = '#2E303E'
+elements = '#1C1E26'
 
 
-sg.set_options(background_color = background, text_color = elements )
+
+sg.set_options(background_color = elements, text_color = background )
 
 # def webcam col
 colwebcam1_layout = [   
-    [sg.Image(filename="logo.png")],
-    [sg.Text("Camera Feed", font=("Helvetica 12"), background_color = background)],
-    [sg.Image(filename="", key="cameraFeed", background_color= background, size=(WIDTH * 2, HEIGHT * 2))]
+    [sg.Image(filename="f2aback.png")],
+    [sg.Text("Camera Feed", font=("Helvetica 12"), background_color = elements)],
+    [sg.Image(filename="", key="cameraFeed", background_color= elements, size=(WIDTH * 2, HEIGHT * 2))]
 ]
 
 colwebcam1 = sg.Column(colwebcam1_layout, element_justification='center')
 
 
 WorkoutList = [    
-    [sg.Text("[]", size=(10,2), font = ("Helvetica 24"), justification="center", key="currentExercise", background_color=background)],
-    [sg.Text("REPS:", font = ("Helvetica 12"), justification="center", background_color = background, text_color="black")],
-    [sg.Text("0", font = ("Helvetica 32"), justification="center" ,key="repCount", background_color = background, text_color="black")],
-    [sg.Text("Workout History", font=("Helvetica 12"), justification="center", background_color = background, text_color="black")],
+    [sg.Text("[]", size=(10,2), font = ("Helvetica 24"), justification="center", key="currentExercise", background_color=elements)],
+    [sg.Text("REPS:", font = ("Helvetica 12"), justification="center", background_color = elements, text_color=background)],
+    [sg.Text("0", font = ("Helvetica 32"), justification="center" ,key="repCount", background_color = elements, text_color=background)],
+    [sg.Text("Workout History", font=("Helvetica 12"), justification="center", background_color = elements, text_color=background)],
     [sg.Listbox(values=[],size=(60,len(workout_list) + 24), font=("Helvetica 8"), enable_events=False, key="workoutList", background_color= None)]
 ]
 
@@ -125,7 +127,7 @@ layout = [
 
 
 window    = sg.Window("FLAB2AB", layout, 
-                    no_titlebar=False, alpha_channel=1, grab_anywhere=False, 
+                    no_titlebar=False, grab_anywhere=False, 
                     return_keyboard_events=False, location=(600, 100), finalize=True)        
 
 
