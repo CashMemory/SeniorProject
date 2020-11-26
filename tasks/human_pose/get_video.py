@@ -88,7 +88,8 @@ class DebugAPI(Resource):
         return {'debug':f'{id}'}
 
 # ------ Begin GUI layout ------
-workout_list = ['workout1','workout2','workout3']
+workout_list = {}
+
 
 background = '#27D796'
 element_bg = '#232530'
@@ -98,35 +99,34 @@ elements = '#1A1C23'
 sg.set_options(background_color = background, text_color = elements )
 
 # def webcam col
-colwebcam1_layout = 
-[   
-    #[sg.Image(filename=r"logo.png")],
-    [sg.Text("Camera Feed", background_color = background)],
-    [sg.Image(filename="", key="cameraFeed")]
+colwebcam1_layout = [   
+    #[sg.Image(filename="logo.png")],
+    [sg.Text("Camera Feed", font=("Helvetica 12"), background_color = background)],
+    [sg.Image(filename="", key="cameraFeed", background_color= background, size=(WIDTH * 2, HEIGHT * 2))]
 ]
 
 colwebcam1 = sg.Column(colwebcam1_layout, element_justification='center')
 
 
-WorkoutList = 
-[         
-    [sg.Text("Rep Count", size=(60, 1), justification="center", background_color = background)],
-    [sg.Text("1", size=(60, 1), justification="center",key="repcount", background_color = background)],
-    [sg.Text("Workout List", size=(60, 1), justification="center", background_color = background)],
-    [sg.Listbox(values=[],size=(60,30),enable_events=True, key="workoutlist")]
+WorkoutList = [    
+    [sg.Text("[]", size=(10,2), font = ("Helvetica 24"), justification="center", key="currentExercise", background_color=background)],
+    [sg.Text("REPS:", font = ("Helvetica 12"), justification="center", background_color = background, text_color="black")],
+    [sg.Text("0", font = ("Helvetica 32"), justification="center" ,key="repCount", background_color = background, text_color="black")],
+    [sg.Text("Workout History", font=("Helvetica 12"), justification="center", background_color = background, text_color="black")],
+    [sg.Listbox(values=[],size=(60,len(workout_list) + 24), font=("Helvetica 8"), enable_events=False, key="workoutList", background_color= None)]
 ]
 
 worklist = sg.Column(WorkoutList, element_justification='center')
 
-layout = 
-[
+layout = [
+
     [colwebcam1,sg.VSeperator(),worklist]
 ]
 
 
 window    = sg.Window("FLAB2AB", layout, 
                     no_titlebar=False, alpha_channel=1, grab_anywhere=False, 
-                    return_keyboard_events=False, location=(100, 100), finalize=True)        
+                    return_keyboard_events=False, location=(600, 100), finalize=True)        
 
 
 
@@ -183,15 +183,21 @@ def main():
 
     global exercise, stopExercise, drawn
 
-   
+
+    final_list = []
 
     while True:
+   #Gui Stuff
+        event, values = window.read(timeout=10)
+
+        if event == 'Exit' or event == sg.WIN_CLOSED:
+             break
 
         while camera.cap.isOpened() and exercise:
             t = time.time()
 
             #Gui Stuff
-            event, values = window.read(timeout=1)
+            event, values = window.read(timeout=10)
 
             if event == 'Exit' or event == sg.WIN_CLOSED:
                 break;
@@ -220,18 +226,32 @@ def main():
                 camera.out.write(drawn)
 
             imgbytes = cv2.imencode(".png", drawn)[1].tobytes()
-            window["cameraFeed"].update(data=imgbytes)     
+            window["cameraFeed"].update(data=imgbytes)
+
+            window["currentExercise"].update(str(exercise.name))
+            window["repCount"].update(str(exercise.rep_count))  
 
             
             #cv2.imshow('flab2ab',drawn)
             #cv2.waitKey(1)
                    
             if stopExercise:
+                
+
+                history = f"{exercise.name}: {exercise.rep_count}"
+                final_list.append(history)
+                
+                
+
+                window["currentExercise"].update("[]")
+                window["workoutList"].update(final_list)
+                window["cameraFeed"].update("", size=(WIDTH * 2,HEIGHT * 2))
+
                 exercise = None
                 stopExercise = False
-                search = values['workoutlist']
-                new_values = [x for x in workout_list if search in x]
-                window.Element('workoutlist').update(new_values)
+              
+               
+
 
                 print("exercise ended successfully")
 

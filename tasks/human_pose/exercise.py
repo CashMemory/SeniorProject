@@ -29,6 +29,7 @@ Function = namedtuple('Function', ['name', 'args'])
         
 class LeftBicepCurl():
     def __init__(self):
+        self.name = "Left Curl"
         self.joints = [5,7,9] #left shoulder, left elbow, left wrist (11 = left hip)
         self.angles = [150,90,15]
         self.rep_count = 0
@@ -111,6 +112,7 @@ class LeftBicepCurl():
 
 class RightBicepCurl():
     def __init__(self):
+        self.name = "Right Curl"
         self.joints = [6,8,10]  #Right Shoulder, Right Elbow, Right Wrist, (right hip = 12)
         self.angles = [150,90,15]
         self.rep_count = 0
@@ -206,6 +208,7 @@ class RightBicepCurl():
 
 class ShoulderPress():
     def __init__(self):
+        self.name = "Shoulder Press"
         self.joints = [5,6,7,8,9,10,17] #LS, RS, LE, RE, LW, RW, NECK
         self.angles = [150,90,15]
         self.rep_count = 0
@@ -302,6 +305,7 @@ class ShoulderPress():
 
 class Squat():
     def __init__(self):
+        self.name = "Squat"
         self.joints = [11,13]  #LH, LK
         self.rep_count = 0
         self.rep_stack = []
