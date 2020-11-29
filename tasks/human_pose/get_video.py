@@ -126,9 +126,11 @@ layout = [
 ]
 
 
-window    = sg.Window("FLAB2AB", layout, 
+window    = sg.Window("FLAB2AB", layout,
                     no_titlebar=False, grab_anywhere=False, 
-                    return_keyboard_events=False, location=(600, 100), finalize=True)        
+                    return_keyboard_events=False, location=(600, 100), finalize=True)    
+
+window.Maximize()   
 
 
 
