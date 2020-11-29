@@ -104,7 +104,7 @@ sg.set_options(background_color = elements, text_color = background )
 colwebcam1_layout = [   
     [sg.Image(filename="f2aback.png")],
     [sg.Text("Camera Feed", font=("Helvetica 12"), background_color = elements)],
-    [sg.Image(filename="", key="cameraFeed", background_color= elements, size=(WIDTH * 2, HEIGHT * 2))]
+    [sg.Image(filename="", key="cameraFeed", background_color= elements, size=(WIDTH * 4, HEIGHT * 4))]
 ]
 
 colwebcam1 = sg.Column(colwebcam1_layout, element_justification='center')
@@ -126,11 +126,11 @@ layout = [
 ]
 
 
-window    = sg.Window("FLAB2AB", layout,location= (0,0), size = (2560,1280),
+window    = sg.Window("FLAB2AB", layout,location =(0,0), size = (2560,1280)
                     no_titlebar=False, grab_anywhere=False, 
                     return_keyboard_events=False, finalize=True)    
 
-#window.Maximize()   
+window.Maximize()   
 
 
 
