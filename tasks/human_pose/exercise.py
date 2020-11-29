@@ -74,7 +74,7 @@ class LeftBicepCurl():
 
             if has_data:
                 #angle calculations
-                wrist_angle = angle_between_points(xy_dat[5], xy_dat[7], xy_dat[9]) #angle between lshoulder, lelbow, lwrist
+                wrist_angle = 180 - angle_between_points(xy_dat[5], xy_dat[7], xy_dat[9]) #angle between lshoulder, lelbow, lwrist
                 #forearm sampling
                 forearm_length = distance_between_points(xy_dat[7], xy_dat[9])
                 self.arms[self.counter % len(self.arms)] = forearm_length
@@ -100,8 +100,8 @@ class LeftBicepCurl():
 
                 rotation = 90  # TEMP
                 # Save positions of arcs for drawing
-                self.last_known = (Function(cv2.ellipse, [xy_dat[7], (forearm_length, int(.8 * forearm_length)), rotation, wrist_angle, 150, BLUE, 4]), 
-                                   Function(cv2.ellipse, [xy_dat[7], (forearm_length, int(.8 * forearm_length)), rotation, 30, wrist_angle, RED, 4]))
+                self.last_known = (Function(cv2.ellipse, [xy_dat[7], (forearm_length, int(.8 * forearm_length)), rotation, wrist_angle, 150, RED, 4]), 
+                                   Function(cv2.ellipse, [xy_dat[7], (forearm_length, int(.8 * forearm_length)), rotation, 30, wrist_angle, BLUE, 4]))
                                    
             # Draw the arcs
             if self.last_known:
@@ -415,6 +415,8 @@ class Squat():
 
 class Debug():
     def __init__(self):
+        self.name = "Debug"
+        self.rep_count = 0
         self.joints = list(range(18))
         self.skeleton = [[16, 14],  # Right ankle -> Right knee
                          [14, 12],  # Right knee -> Right hip

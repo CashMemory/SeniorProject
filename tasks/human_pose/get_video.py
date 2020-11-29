@@ -96,6 +96,9 @@ element_bg = '#232530'
 #elements = '#2E303E'
 elements = '#1C1E26'
 
+# GUI constants
+_width = 640
+_height = 480
 
 
 sg.set_options(background_color = elements, text_color = background )
@@ -104,18 +107,21 @@ sg.set_options(background_color = elements, text_color = background )
 colwebcam1_layout = [   
     [sg.Image(filename="f2aback.png")],
     [sg.Text("Camera Feed", font=("Helvetica 12"), background_color = elements)],
-    [sg.Image(filename="", key="cameraFeed", background_color= elements, size=(WIDTH * 4, HEIGHT * 4))]
+    [sg.Image(filename="", key="cameraFeed", background_color=elements, size=(_width, _height))]
 ]
 
 colwebcam1 = sg.Column(colwebcam1_layout, element_justification='center')
 
 
 WorkoutList = [    
-    [sg.Text("[]", size=(10,2), font = ("Helvetica 24"), justification="center", key="currentExercise", background_color=elements)],
-    [sg.Text("REPS:", font = ("Helvetica 12"), justification="center", background_color = elements, text_color=background)],
-    [sg.Text("0", font = ("Helvetica 32"), justification="center" ,key="repCount", background_color = elements, text_color=background)],
-    [sg.Text("Workout History", font=("Helvetica 12"), justification="center", background_color = elements, text_color=background)],
-    [sg.Listbox(values=[],size=(60,len(workout_list) + 24), font=("Helvetica 8"), enable_events=False, key="workoutList", background_color= None)]
+    [sg.Text("[]", size=(40,2), font = ("Helvetica 24"), justification="center", key="currentExercise", background_color=elements)],
+    [sg.Text("REPS:", font = ("Helvetica 16"), justification="center", background_color = elements, text_color=background)],
+    [sg.Text("0  ", font = ("Helvetica 32"), justification="center" ,key="repCount", background_color = elements, text_color=background)],
+    [sg.Text("Workout History", font=("Helvetica 16"), justification="center", background_color = elements, text_color=background)],
+    [sg.Text("                                 ", size=(35, 1), justification="center", font=("Helvetica 12"), background_color=elements, text_color=background, key="exercise1")],
+    [sg.Text("                                 ", size=(35, 1), justification="center", font=("Helvetica 12"), background_color=elements, text_color=background, key="exercise2")],
+    [sg.Text("                                 ", size=(35, 1), justification="center", font=("Helvetica 12"), background_color=elements, text_color=background, key="exercise3")],
+    [sg.Text("                                 ", size=(35, 1), justification="center", font=("Helvetica 12"), background_color=elements, text_color=background, key="exercise4")]
 ]
 
 worklist = sg.Column(WorkoutList, element_justification='center')
@@ -126,11 +132,11 @@ layout = [
 ]
 
 
-window    = sg.Window("FLAB2AB", layout,location =(0,0), size = (2560,1280),
+window    = sg.Window("FLAB2AB", layout,location =(0,0), size = (1280,720),
                     no_titlebar=False, grab_anywhere=False, 
                     return_keyboard_events=False, finalize=True)    
 
-#window.Maximize()   
+window.Maximize()   
 
 
 
@@ -154,7 +160,8 @@ def main():
     print("Set up model")
 
     # Set up the camera
-    camera = Camera(width=640, height=480)
+    #camera = Camera(width=640, height=480)
+    camera = Camera(width=_width, height=_height)
     camera.capture_video("mp4v", "/tmp/output.mp4")
     assert camera.cap is not None, "Camera Open Error"
     print("Set up camera")
@@ -235,6 +242,7 @@ def main():
             window["currentExercise"].update(str(exercise.name))
             window["repCount"].update(str(exercise.rep_count))  
 
+
             
             #cv2.imshow('flab2ab',drawn)
             #cv2.waitKey(1)
@@ -244,21 +252,24 @@ def main():
 
                 #lmao janky but helps with spacing
                 if exercise.name == "Right Curl":
-                    history = f"Right Curl         : {exercise.rep_count}"
+                    history = f"Right Curl         Reps: {exercise.rep_count}"
                 elif exercise.name == "Left Curl":
-                    history = f"Left Curl          : {exercise.rep_count}"
+                    history = f"Left Curl          Reps: {exercise.rep_count}"
                 elif exercise.name == "Squat":
-                    history = f"Squat              : {exercise.rep_count}"
+                    history = f"Squat              Reps: {exercise.rep_count}"
                 else:
-                    history = f"Shoulder Press     : {exercise.rep_count}"
+                    history = f"Shoulder Press     Reps: {exercise.rep_count}"
 
                 final_list.append(history)
                 
                 
+                for i in range(1, 5):
+                    if len(final_list) >= i:
+                        window[f"exercise{i}"].update(final_list[i-1])
 
                 window["currentExercise"].update("[]")
-                window["workoutList"].update(final_list)
-                window["cameraFeed"].update("", size=(WIDTH * 2,HEIGHT * 2))
+                #window["workoutList"].update(final_list)
+                window["cameraFeed"].update("", size=(_width, _height))
 
                 exercise = None
                 stopExercise = False
