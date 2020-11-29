@@ -86,12 +86,12 @@ class LeftBicepCurl():
                 bottom_angle = 120
                 top_angle = 50     
                                 
-                if wrist_angle < top_angle:
+                if (-1 * wrist_angle + 180) < top_angle:
                     if self.rep_stack and self.rep_stack[-1] == "blue": 
                         self.rep_stack.append("red")
 
                 # Blue
-                elif wrist_angle > bottom_angle:
+                elif (-1 * wrist_angle + 180) > bottom_angle:
                     if len(self.rep_stack) == 0:
                         self.rep_stack.append("blue")
                     elif self.rep_stack[-1] == "red":
