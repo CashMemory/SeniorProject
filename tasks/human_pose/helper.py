@@ -1,8 +1,8 @@
 import time
-import torch
-import cv2
 
+import cv2
 import PIL.Image
+import torch
 import torchvision.transforms as transforms
 
 mean = torch.Tensor([0.485, 0.456, 0.406]).cuda()
@@ -49,6 +49,7 @@ def get_keypoint(humans, hnum, peaks):
             kpoint.append(peak)
     return kpoint
 
+
 WIDTH = 224
 HEIGHT = 224
 X_compress = 640.0 / WIDTH * 1.0
@@ -65,15 +66,17 @@ def draw(src, counts, objects, peaks, t):
                 x = round(keypoints[j][2] * WIDTH * X_compress)
                 y = round(keypoints[j][1] * HEIGHT * Y_compress)
                 cv2.circle(src, (x, y), 3, color, 2)
-                cv2.putText(src, "%d" % int(keypoints[j][0]), (x + 5, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+                cv2.putText(
+                    src,
+                    "%d" % int(keypoints[j][0]),
+                    (x + 5, y),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 255),
+                    1,
+                )
                 cv2.circle(src, (x, y), 3, color, 2)
     cv2.putText(
-        src,
-        "FPS: %d" % fps,
-        (20, 20),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        1,
-        (0, 255, 0),
-        1
+        src, "FPS: %d" % fps, (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1
     )
     return src

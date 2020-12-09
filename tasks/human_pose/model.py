@@ -1,14 +1,10 @@
-import torch
-import torch2trt
-import torchvision.transforms as transforms
-from torch2trt import TRTModule
+import time
 
+import torch
 import trt_pose.coco
 import trt_pose.models
-from trt_pose.parse_objects import ParseObjects
-from trt_pose.draw_objects import DrawObjects
+from torch2trt import TRTModule
 
-import time
 
 class Model:
     """Deep learning model"""
@@ -17,7 +13,7 @@ class Model:
         self.the_model = None
         self.model_trt = None
         self.height = None
-        self.width = None 
+        self.width = None
         self.model_weights = None
         self.optimized_model = None
         self.num_parts = len(pose_annotations["keypoints"])
@@ -37,25 +33,18 @@ class Model:
         # The number of part affinity field channels is 2x the number of links,
         # because each link has a channel corresponding to the x and y
         # direction of the vector field for each link.
-        
+
         print("------ model = resnet--------")
         # resnet18 was trained on an input resolution of 224x224
         self.width = 224
         self.height = 224
-        self.model_weights = (
-            "resnet18_baseline_att_224x224_A_epoch_249.pth"
-        )
-        self.optimized_model = (
-            "resnet18_baseline_att_224x224_A_epoch_249_trt.pth"
-        )
+        self.model_weights = "resnet18_baseline_att_224x224_A_epoch_249.pth"
+        self.optimized_model = "resnet18_baseline_att_224x224_A_epoch_249_trt.pth"
         self.the_model = (
-            trt_pose.models.resnet18_baseline_att(
-                self.num_parts, 2 * self.num_links
-            )
+            trt_pose.models.resnet18_baseline_att(self.num_parts, 2 * self.num_links)
             .cuda()
             .eval()
         )
-        
 
     def load_weights(self):
         """Load the model weights.

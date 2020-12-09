@@ -1,5 +1,6 @@
 import cv2
 
+
 class Camera:
     def __init__(self, width, height):
         self.width = width
@@ -8,7 +9,7 @@ class Camera:
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         self.out = None
-        self.frame = None #stores the drawn frame
+        self.frame = None  # stores the drawn frame
 
     def capture_video(self, codec, output_loc):
         """
@@ -20,5 +21,5 @@ class Camera:
             output_loc,
             fourcc,
             self.cap.get(cv2.CAP_PROP_FPS),
-            (self.width, self.height)
+            (self.width, self.height),
         )
