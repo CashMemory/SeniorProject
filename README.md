@@ -13,15 +13,15 @@ auto-logging capability to a user who is exercising. The project currently
 supports three exercises: bicep curl, shoulder press, and squat.
 
 <img
-src="../media/curl.gif"
+src="media/curl.gif"
 height=256/>
 
 <img
-src="../media/press.gif"
+src="media/press.gif"
 height=256/>
 
 <img
-src="../media/squat.gif"
+src="media/squat.gif"
 height=256/>
 
 ## Dependencies
